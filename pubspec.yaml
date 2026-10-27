@@ -1,7 +1,7 @@
 name: atlm_pocket_guide
 description: "Buku Saku ATLM - referensi cepat analis laboratorium, offline, gratis."
 publish_to: "none"
-version: 1.5.4+9
+version: 1.5.5+10
 
 environment:
   sdk: ^3.5.0
