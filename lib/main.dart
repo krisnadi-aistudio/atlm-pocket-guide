@@ -46,7 +46,7 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  late final Future<List<Article>> _articlesFuture = loadArticles();
+  Future<List<Article>> _articlesFuture = loadArticles();
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +58,19 @@ class _AppShellState extends State<AppShell> {
             body: Center(
                 child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text('Gagal memuat konten lokal: ${snapshot.error}'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Gagal memuat konten lokal: ${snapshot.error}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => setState(() {
+                      _articlesFuture = loadArticles();
+                    }),
+                    child: const Text('Coba lagi'),
+                  ),
+                ],
+              ),
             )),
           );
         }
