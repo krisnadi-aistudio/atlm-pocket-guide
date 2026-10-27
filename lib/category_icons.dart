@@ -27,26 +27,28 @@ import 'package:flutter/material.dart';
 /// (24/26/28/36) — file ini tidak mengubah ukuran, margin, padding,
 /// maupun struktur kartu apa pun.
 Widget categoryIcon(String category, double size, Color color) {
+  final Widget icon;
   switch (category) {
     case 'HEMATOLOGI':
-      return proIcon('bloodCells', size, color);
+      icon = proIcon('bloodCells', size, color);
     case 'HEMOSTASIS':
-      return _CustomIcon(size, _ClotV3Painter(color));
+      icon = _CustomIcon(size, _ClotV3Painter(color));
     case 'PARASITOLOGI':
-      return proIcon('malariaMicroscope', size, color);
+      icon = proIcon('malariaMicroscope', size, color);
     case 'KIMIA KLINIK':
-      return _CustomIcon(size, _TubePainter(color));
+      icon = _CustomIcon(size, _TubePainter(color));
     case 'URINALISA':
-      return proIcon('urineSample', size, color);
+      icon = proIcon('urineSample', size, color);
     case 'FAECES':
-      return proIcon('stoolCup', size, color);
+      icon = proIcon('stoolCup', size, color);
     case 'MIKROBIOLOGI':
-      return proIcon('bacteria', size, color);
+      icon = proIcon('bacteria', size, color);
     case 'IMUNOSEROLOGI':
-      return proIcon('antibody', size, color);
+      icon = proIcon('antibody', size, color);
     default:
-      return Icon(Icons.info, color: color, size: size);
+      icon = Icon(Icons.info, color: color, size: size);
   }
+  return Semantics(label: category, child: icon);
 }
 
 class _CustomIcon extends StatelessWidget {
