@@ -54,14 +54,17 @@ class LabLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: const BoxDecoration(
-        color: kPrimary,
-        shape: BoxShape.circle,
+    return Semantics(
+      label: 'Logo laboratorium',
+      child: Container(
+        width: size,
+        height: size,
+        decoration: const BoxDecoration(
+          color: kPrimary,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.biotech, color: Colors.white, size: size * 0.55),
       ),
-      child: Icon(Icons.biotech, color: Colors.white, size: size * 0.55),
     );
   }
 }
@@ -84,7 +87,7 @@ class SectionHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child:
-              const Icon(Icons.grid_view_rounded, color: kPrimary, size: 18),
+              const Icon(Icons.category, color: kPrimary, size: 18),
         ),
         const SizedBox(width: 10),
         Expanded(
