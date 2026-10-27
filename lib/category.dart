@@ -36,7 +36,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             .toList();
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.category,
+        title: Text('${widget.category} • ${widget.articles.length} artikel',
             style: const TextStyle(
                 fontWeight: FontWeight.bold, color: kPrimary)),
         backgroundColor: kBackground,
@@ -50,7 +50,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               controller: _controller,
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
-                hintText: 'Cari di kategori ini…',
+                hintText: 'Cari judul atau kata kunci di kategori ini…',
                 prefixIcon: const Icon(Icons.search, color: kPrimary),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
