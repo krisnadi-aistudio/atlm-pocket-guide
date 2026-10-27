@@ -1,0 +1,16 @@
+# Flutter/Dart
+.dart_tool/
+.build/
+build/
+.pub-cache/
+.pub/
+# Android
+android/.gradle/
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/local.properties
+# Misc
+*.iml
+.idea/
+.DS_Store
