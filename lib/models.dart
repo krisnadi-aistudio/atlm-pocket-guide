@@ -20,7 +20,7 @@ class Article {
         id: j['id'] as String,
         title: j['title'] as String,
         category: j['category'] as String,
-        body: j['body'] as String,
+        body: (j['body'] as String?) ?? '',
         reference: (j['reference'] as String?) ?? '',
       );
 
