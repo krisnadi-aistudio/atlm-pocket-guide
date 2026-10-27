@@ -27,16 +27,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final visible = _query.isEmpty
+    final filtered = _query.isEmpty
         ? widget.articles
         : widget.articles
             .where((a) =>
                 a.title.toLowerCase().contains(_query.toLowerCase()) ||
                 a.body.toLowerCase().contains(_query.toLowerCase()))
             .toList();
+    // Urutan dasar layar kategori selalu A–Z (case-insensitive);
+    // hasil filter pencarian mewarisi urutan ini.
+    final visible = List.of(filtered)
+      ..sort((a, b) =>
+          a.title.toLowerCase().compareTo(b.title.toLowerCase()));
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.category} • ${widget.articles.length} artikel',
+        title: Text(widget.category,
             style: const TextStyle(
                 fontWeight: FontWeight.bold, color: kPrimary)),
         backgroundColor: kBackground,
@@ -46,32 +51,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
+            SearchField(
               controller: _controller,
+              hintText: 'Cari judul atau kata kunci di kategori ini…',
+              showClear: _query.isNotEmpty,
               onChanged: (v) => setState(() => _query = v),
-              decoration: InputDecoration(
-                hintText: 'Cari judul atau kata kunci di kategori ini…',
-                prefixIcon: const Icon(Icons.search, color: kPrimary),
-                suffixIcon: _query.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _controller.clear();
-                          setState(() => _query = '');
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: kSurfaceVariant,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: kPrimary, width: 1.5),
-                ),
-              ),
+              onClear: () {
+                _controller.clear();
+                setState(() => _query = '');
+              },
             ),
             const SizedBox(height: 8),
             Align(
@@ -79,18 +67,38 @@ class _CategoryScreenState extends State<CategoryScreen> {
               child: Text(
                   _query.isEmpty
                       ? '${widget.articles.length} artikel'
-                      : visible.isEmpty
-                          ? 'Tidak ditemukan untuk “$_query”.'
-                          : '${visible.length} hasil untuk “$_query”.',
+                      : '${visible.length} hasil untuk “$_query”.',
                   style: const TextStyle(
                       fontSize: 13, color: kOnSurfaceVariant)),
             ),
             const SizedBox(height: 8),
             Expanded(
               child: visible.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Tidak ada artikel di kategori ini.'),
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _query.isEmpty
+                                  ? 'Kategori ini belum punya artikel.'
+                                  : 'Tidak ada hasil untuk “$_query”.',
+                              textAlign: TextAlign.center,
+                            ),
+                            if (_query.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              OutlinedButton(
+                                onPressed: () {
+                                  _controller.clear();
+                                  setState(() => _query = '');
+                                },
+                                child: const Text('Hapus pencarian'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     )
                   : ListView.separated(
                       itemCount: visible.length,
