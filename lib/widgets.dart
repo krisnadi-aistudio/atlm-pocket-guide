@@ -165,7 +165,7 @@ class InfoRow extends StatelessWidget {
                 ),
               ),
               if (onTap != null)
-                const Icon(Icons.chevron_right, color: Colors.grey),
+                const Icon(Icons.chevron_right, color: kOnSurfaceVariant),
             ],
           ),
         ),
@@ -208,7 +208,13 @@ class ArticleRow extends StatelessWidget {
                   color: style.color.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: categoryIcon(article.category, 26, style.color),
+                // Bila teks kategori sudah tampil (showCategory),
+                // label ikon tidak dibacakan ganda oleh TalkBack.
+                child: showCategory
+                    ? ExcludeSemantics(
+                        child: categoryIcon(
+                            article.category, 26, style.color))
+                    : categoryIcon(article.category, 26, style.color),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -237,7 +243,7 @@ class ArticleRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.chevron_right, color: kOnSurfaceVariant),
             ],
           ),
         ),
@@ -264,9 +270,10 @@ class CategoryCard extends StatelessWidget {
     final style = categoryStyle(category);
     if (mode == 1) {
       return InfoRow(
-          iconChild: categoryIcon(category, 24, kPrimary),
+          iconChild:
+              ExcludeSemantics(child: categoryIcon(category, 24, kPrimary)),
           title: category,
-          description: '',
+          description: '$count artikel',
           onTap: onTap);
     }
     return Card(
@@ -279,39 +286,117 @@ class CategoryCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              categoryIcon(category, mode == 3 ? 28 : 36, style.color),
-              const SizedBox(height: 8),
-              // Mode 3 kolom: kartu sempit (~101px di layar 360px) sehingga
-              // label satu kata yang panjang putus di tengah kata
-              // ("IMUNOSERO / LOGI"). FittedBox scaleDown mengecilkan
-              // label HANYA bila tidak muat, jadi satu baris utuh; label
-              // pendek tetap 14px seperti sebelumnya. Label ber-spasi
-              // (KIMIA KLINIK) sudah putus rapi di spasi, jadi tetap
-              // memakai Text 2 baris biasa. Mode 2 kolom cukup lebar
-              // sehingga tidak diubah.
-              if (mode == 3 && !category.contains(' '))
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(category,
-                      textAlign: TextAlign.center,
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Teks kartu sudah mengumumkan kategori, jadi label
+                  // ikon tidak dibacakan ganda oleh TalkBack.
+                  ExcludeSemantics(
+                      child: categoryIcon(
+                          category, mode == 3 ? 28 : 36, style.color)),
+                  const SizedBox(height: 8),
+                  // Mode 3 kolom: kartu sempit (~101px di layar 360px) sehingga
+                  // label satu kata yang panjang putus di tengah kata
+                  // ("IMUNOSERO / LOGI"). FittedBox scaleDown mengecilkan
+                  // label HANYA bila tidak muat, jadi satu baris utuh; label
+                  // pendek tetap 14px seperti sebelumnya. Label ber-spasi
+                  // (KIMIA KLINIK) sudah putus rapi di spasi, jadi tetap
+                  // memakai Text 2 baris biasa. Mode 2 kolom cukup lebar
+                  // sehingga tidak diubah.
+                  if (mode == 3 && !category.contains(' '))
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(category,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold),
+                          maxLines: 1),
+                    )
+                  else
+                    Text(category,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            // Lencana jumlah: diposisikan di sudut (bukan baris baru)
+            // supaya tinggi kartu tidak berubah dan tidak meluber di
+            // mode 3 kolom yang sempit.
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Semantics(
+                label: '$count artikel',
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: kSurfaceVariant,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text('$count',
                       style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.bold),
-                      maxLines: 1),
-                )
-              else
-                Text(category,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
-            ],
-          ),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: kOnSurfaceVariant)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Kolom pencarian bersama (Beranda + layar kategori): ikon cari,
+/// tombol hapus saat ada kueri, latar dan radius yang sama.
+/// Menggantikan dua salinan InputDecoration yang sebelumnya identik.
+class SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hintText;
+  final bool showClear;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+  const SearchField({
+    required this.controller,
+    required this.hintText,
+    required this.showClear,
+    required this.onChanged,
+    required this.onClear,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: const Icon(Icons.search, color: kPrimary),
+        suffixIcon: showClear
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: onClear,
+              )
+            : null,
+        filled: true,
+        fillColor: kSurfaceVariant,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: kPrimary, width: 1.5),
         ),
       ),
     );
