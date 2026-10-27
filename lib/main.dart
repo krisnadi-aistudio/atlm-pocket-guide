@@ -46,11 +46,11 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  Future<List<Article>> _articlesFuture = loadArticles();
+  Future<ArticlesLoadResult> _articlesFuture = loadArticles();
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Article>>(
+    return FutureBuilder<ArticlesLoadResult>(
       future: _articlesFuture,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -61,13 +61,22 @@ class _AppShellState extends State<AppShell> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Gagal memuat konten lokal: ${snapshot.error}'),
+                  const Text('Konten gagal dimuat. Coba lagi.'),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => setState(() {
                       _articlesFuture = loadArticles();
                     }),
                     child: const Text('Coba lagi'),
+                  ),
+                  const SizedBox(height: 8),
+                  ExpansionTile(
+                    title: const Text('Detail teknis',
+                        style: TextStyle(fontSize: 13)),
+                    children: [
+                      Text('${snapshot.error}',
+                          style: const TextStyle(fontSize: 13)),
+                    ],
                   ),
                 ],
               ),
@@ -78,7 +87,11 @@ class _AppShellState extends State<AppShell> {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
         }
-        return Scaffold(body: HomeScreen(articles: snapshot.data!));
+        final result = snapshot.data!;
+        return Scaffold(
+            body: HomeScreen(
+                articles: result.articles,
+                skippedCount: result.skipped));
       },
     );
   }
