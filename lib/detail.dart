@@ -80,7 +80,7 @@ class _DetailScreenState extends State<DetailScreen> {
           title: Text(article.category,
               style: const TextStyle(fontSize: 14, color: kPrimary)),
           backgroundColor: kBackground,
-          elevation: 0,
+          elevation: 1,
           actions: [
             IconButton(
               icon: Icon(
@@ -632,8 +632,8 @@ class _BuktiTab extends StatelessWidget {
                     ? 'Belum ada literatur untuk artikel ini.'
                     : article.reference.trim())
           else
-            for (final c in citations!) ...[
-              _LiteratureCard(text: c),
+            for (var i = 0; i < citations!.length; i++) ...[
+              _LiteratureCard(index: i + 1, text: citations![i]),
               const SizedBox(height: 12),
             ],
         ],
@@ -688,8 +688,9 @@ class _SumberTab extends StatelessWidget {
 }
 
 class _LiteratureCard extends StatelessWidget {
+  final int index;
   final String text;
-  const _LiteratureCard({required this.text});
+  const _LiteratureCard({required this.index, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -712,8 +713,8 @@ class _LiteratureCard extends StatelessWidget {
                 color: kPrimaryContainer,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text('Literatur',
-                  style: TextStyle(
+              child: Text('$index. Literatur',
+                  style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: kOnPrimaryContainer)),
@@ -739,8 +740,19 @@ class _NoteCard extends StatelessWidget {
         color: kSurfaceVariant,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(text,
-          style: const TextStyle(color: kOnSurfaceVariant, height: 1.5)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline,
+              color: kOnSurfaceVariant, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text,
+                style:
+                    const TextStyle(color: kOnSurfaceVariant, height: 1.5)),
+          ),
+        ],
+      ),
     );
   }
 }
