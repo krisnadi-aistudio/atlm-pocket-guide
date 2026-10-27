@@ -25,7 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     PackageInfo.fromPlatform().then((info) {
       if (mounted) {
         // Pill & footer tampil mayor.minor ('Versi 1.5'); nomor build
-        // lengkap tampil di baris Versi Aplikasi + halaman Tentang.
+        // lengkap tampil di subtitle baris Tentang + halaman Tentang.
         setState(() {
           _versionText =
               'Versi ${info.version.split('.').take(2).join('.')}';
@@ -33,7 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Versi ${info.version} (build ${info.buildNumber})';
         });
       }
-    });
+    }).catchError((_) {});
   }
 
   void _openFeatures(BuildContext context) {
@@ -74,42 +74,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _SettingsRow(
-                  icon: Icons.lightbulb,
-                  title: 'Fitur',
-                  onTap: () => _openFeatures(context)),
-              const SizedBox(height: 12),
-              _SettingsRow(
-                  icon: Icons.gavel,
-                  title: 'Syarat & Ketentuan',
-                  onTap: () => _openInfo(context, _InfoPage.terms)),
-              const SizedBox(height: 12),
-              _SettingsRow(
-                  icon: Icons.policy,
-                  title: 'Kebijakan Privasi',
-                  onTap: () => _openInfo(context, _InfoPage.privacy)),
-              const SizedBox(height: 12),
-              _SettingsRow(
-                  icon: Icons.medical_services,
-                  title: 'Disclaimer Medis',
-                  onTap: () => _openDisclaimer(context)),
-              const SizedBox(height: 20),
-              const _SectionLabel(title: 'Informasi'),
-              const SizedBox(height: 12),
-              _SettingsRow(
-                  icon: Icons.info,
-                  title: 'Tentang Aplikasi',
-                  onTap: () => _openAboutApp(context)),
-              const SizedBox(height: 12),
-              _SettingsRow(
-                  icon: Icons.code,
-                  title: 'Lisensi Open Source',
-                  onTap: () => _openInfo(context, _InfoPage.openSource)),
-              const SizedBox(height: 12),
-              _SettingsRow(
-                  icon: Icons.smartphone,
-                  title: 'Versi Aplikasi',
-                  subtitle: _fullVersionText),
+              _SettingsGroup(rows: [
+                _SettingsRow(
+                    icon: Icons.lightbulb,
+                    title: 'Fitur',
+                    onTap: () => _openFeatures(context)),
+                _SettingsRow(
+                    icon: Icons.gavel,
+                    title: 'Syarat & Ketentuan',
+                    onTap: () => _openInfo(context, _InfoPage.terms)),
+                _SettingsRow(
+                    icon: Icons.policy,
+                    title: 'Kebijakan Privasi',
+                    onTap: () => _openInfo(context, _InfoPage.privacy)),
+                _SettingsRow(
+                    icon: Icons.medical_services,
+                    title: 'Disclaimer Medis',
+                    onTap: () => _openDisclaimer(context)),
+              ]),
+              const SizedBox(height: 16),
+              _SettingsGroup(rows: [
+                _SettingsRow(
+                    icon: Icons.info,
+                    title: 'Tentang Aplikasi',
+                    subtitle: _fullVersionText,
+                    onTap: () => _openAboutApp(context)),
+                _SettingsRow(
+                    icon: Icons.code,
+                    title: 'Lisensi Open Source',
+                    onTap: () => _openInfo(context, _InfoPage.openSource)),
+              ]),
               const SizedBox(height: 8),
             ],
           ),
@@ -119,8 +113,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-/// Baris pengaturan ala SakuMedis: ikon dalam kotak biru muda + judul +
-/// panah (kecuali baris info seperti versi).
+/// Satu baris pengaturan (tanpa kartu sendiri): dipakai di dalam
+/// _SettingsGroup supaya baris-baris sejenis menyatu dalam satu kartu
+/// dengan pemisah, bukan kartu terpisah per baris. Tinggi baris
+/// minimal 80 (ikon 48 + padding 16) sehingga target sentuh aman.
 class _SettingsRow extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -131,6 +127,54 @@ class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                  color: kPrimaryContainer,
+                  borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: kPrimary),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(subtitle!,
+                        style: const TextStyle(
+                            fontSize: 13, color: kOnSurfaceVariant)),
+                  ],
+                ],
+              ),
+            ),
+            if (onTap != null)
+              const Icon(Icons.chevron_right, color: kOnSurfaceVariant),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Kartu grup baris pengaturan: satu kartu, baris dipisah Divider.
+class _SettingsGroup extends StatelessWidget {
+  final List<Widget> rows;
+  const _SettingsGroup({required this.rows});
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -138,65 +182,16 @@ class _SettingsRow extends StatelessWidget {
       elevation: 0,
       color: Colors.white,
       margin: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                    color: kPrimaryContainer,
-                    borderRadius: BorderRadius.circular(12)),
-                child: Icon(icon, color: kPrimary),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      Text(subtitle!,
-                          style: const TextStyle(
-                              fontSize: 13, color: kOnSurfaceVariant)),
-                    ],
-                  ],
-                ),
-              ),
-              if (onTap != null)
-                const Icon(Icons.chevron_right, color: kOnSurfaceVariant),
-            ],
-          ),
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            rows[i],
+            if (i < rows.length - 1)
+              const Divider(height: 1, color: kOutlineVariant),
+          ],
+        ],
       ),
-    );
-  }
-}
-
-/// Label grup ala SakuMedis: ikon + teks biru.
-class _SectionLabel extends StatelessWidget {
-  final String title;
-  const _SectionLabel({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Icon(Icons.info_outline, color: kPrimary, size: 20),
-        const SizedBox(width: 6),
-        Text(title,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: kPrimary)),
-      ],
     );
   }
 }
@@ -238,6 +233,13 @@ class _FeaturesPage extends StatelessWidget {
               title: 'Sepenuhnya Offline',
               description:
                   'Semua artikel tersimpan di perangkat, tanpa akun dan tanpa server.',
+            ),
+            SizedBox(height: 12),
+            InfoRow(
+              icon: Icons.info_outline,
+              title: 'Batasan yang disengaja',
+              description:
+                  'Tanpa akun, tanpa riwayat baca, dan tanpa bookmark — dibuka untuk satu keperluan, lalu ditutup.',
             ),
           ],
         ),
@@ -470,31 +472,45 @@ class _InfoPageScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (page == _InfoPage.terms) ...[
+              const _Subheading('Tujuan'),
+              const SizedBox(height: 6),
               const Text(
                   'Buku Saku ATLM adalah alat bantu referensi offline untuk analis laboratorium medik dan pembelajar di bidang laboratorium medik.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              const _Subheading('Bukan pengganti SOP'),
+              const SizedBox(height: 6),
               const Text(
                   'Isi aplikasi ini bukan pengganti Standar Operasional Prosedur (SOP) laboratorium, instruksi pabrikan alat dan reagen, maupun penilaian tenaga kesehatan yang kompeten. Bila ada perbedaan antara aplikasi dan SOP yang berlaku, SOP yang berlaku yang dipakai.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              const _Subheading('Offline dan gratis'),
+              const SizedBox(height: 6),
               const Text(
                   'Seluruh konten tersimpan di perangkat dan dapat dipakai tanpa koneksi internet. Aplikasi ini tidak memungut biaya dan tidak menampilkan iklan.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
             ],
             if (page == _InfoPage.privacy) ...[
+              const _Subheading('Ringkas'),
+              const SizedBox(height: 6),
               const Text(
                   'Buku Saku ATLM tidak mengumpulkan, mengirim, atau membagikan data pengguna apa pun. Aplikasi ini tidak memakai akun, tidak memakai server, dan tidak memakai pelacak.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              const _Subheading('Data yang disimpan'),
+              const SizedBox(height: 6),
               const Text(
                   'Satu-satunya yang tersimpan lokal di perangkat adalah preferensi tampilan (mode grid kategori). Tidak ada data pribadi, tidak ada riwayat baca, tidak ada bookmark.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              const _Subheading('Izin'),
+              const SizedBox(height: 6),
               const Text(
                   'Aplikasi ini tidak meminta izin apa pun di perangkat (tanpa akses kamera, lokasi, kontak, atau penyimpanan).',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              const _Subheading('Menghapus aplikasi'),
+              const SizedBox(height: 6),
               const Text(
                   'Karena tidak ada data yang dikumpulkan, tidak ada data yang dapat dihapus dari server — menghapus aplikasi sudah cukup.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
@@ -503,7 +519,9 @@ class _InfoPageScreen extends StatelessWidget {
               const Text(
                   'Aplikasi ini dibangun di atas perangkat lunak sumber terbuka berikut, dipakai sesuai lisensinya masing-masing. Terima kasih kepada para kontributornya.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              const _Subheading('Pustaka dan ikon'),
+              const SizedBox(height: 6),
               const InfoRow(
                   icon: Icons.code,
                   title: 'Flutter & Material 3',
@@ -541,5 +559,18 @@ class _InfoPageScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Subjudul berpola di halaman info: memecah dinding teks supaya
+/// dokumen legal mudah dipindai.
+class _Subheading extends StatelessWidget {
+  final String title;
+  const _Subheading(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(title,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
   }
 }
