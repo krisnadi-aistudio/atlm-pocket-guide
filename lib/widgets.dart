@@ -17,6 +17,27 @@ const kOnWarning = Color(0xFF5C3A00);
 const kCriticalContainer = Color(0xFFFDECEA);
 const kCriticalBorder = Color(0xFFE57373);
 
+// Palet gelap (tema gelap mengikuti sistem; nilai tema terang di atas
+// tidak berubah). Latar gelap #0E1415 mengikuti dokumen review desain.
+const kBackgroundDark = Color(0xFF0E1415);
+const kSurfaceDark = Color(0xFF1C2526);
+const kSurfaceVariantDark = Color(0xFF243235);
+const kOutlineVariantDark = Color(0xFF3A4A4F);
+const kOnSurfaceDark = Color(0xFFE6ECEC);
+const kOnSurfaceVariantDark = Color(0xFF9FB0B5);
+const kPrimaryDark = Color(0xFF8AB4F8);
+const kOnPrimaryDark = Color(0xFF10243E);
+const kPrimaryContainerDark = Color(0xFF1E3A5F);
+const kOnPrimaryContainerDark = Color(0xFFD6E4FF);
+const kCriticalContainerDark = Color(0xFF3B1E1C);
+const kCriticalTextDark = Color(0xFFFF8A80);
+const kWarningContainerDark = Color(0xFF3A2C08);
+const kOnWarningDark = Color(0xFFFFD98A);
+
+/// True bila tema aktif gelap (mengikuti sistem Android).
+bool isDarkMode(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark;
+
 /// Warna kategori. Ikonnya bukan lagi IconData: lihat categoryIcon()
 /// di category_icons.dart (6 kategori memakai gambar CustomPaint).
 class CategoryStyle {
@@ -59,11 +80,11 @@ class LabLogo extends StatelessWidget {
       child: Container(
         width: size,
         height: size,
-        decoration: const BoxDecoration(
-          color: kPrimary,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary,
           shape: BoxShape.circle,
         ),
-        child: Icon(Icons.biotech, color: Colors.white, size: size * 0.55),
+        child: Icon(Icons.biotech, color: Theme.of(context).colorScheme.surface, size: size * 0.55),
       ),
     );
   }
@@ -83,11 +104,11 @@ class SectionHeader extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: kPrimaryContainer,
+            color: Theme.of(context).colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(8),
           ),
           child:
-              const Icon(Icons.category, color: kPrimary, size: 18),
+              Icon(Icons.category, color: Theme.of(context).colorScheme.primary, size: 18),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -126,9 +147,9 @@ class InfoRow extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: kOutlineVariant)),
+          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       elevation: 0,
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       margin: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
@@ -141,11 +162,11 @@ class InfoRow extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: kPrimaryContainer,
+                  color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: iconChild ??
-                    Icon(icon, color: kPrimary, size: 24),
+                    Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -158,14 +179,14 @@ class InfoRow extends StatelessWidget {
                     if (description.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(description,
-                          style: const TextStyle(
-                              fontSize: 13, color: kOnSurfaceVariant)),
+                          style: TextStyle(
+                              fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ],
                   ],
                 ),
               ),
               if (onTap != null)
-                const Icon(Icons.chevron_right, color: kOnSurfaceVariant),
+                Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -175,7 +196,7 @@ class InfoRow extends StatelessWidget {
 }
 
 /// Baris kartu artikel: ikon kotak pastel kategori + judul + subjudul
-/// kata kunci + panah kanan. Tanpa bookmark.
+/// kata kunci + panah kanan. Tanpa bookmark, sesuai perintah pengguna.
 class ArticleRow extends StatelessWidget {
   final Article article;
   final VoidCallback onOpen;
@@ -190,9 +211,9 @@ class ArticleRow extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: kOutlineVariant)),
+          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       elevation: 2,
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       margin: EdgeInsets.zero,
       child: InkWell(
         onTap: onOpen,
@@ -208,13 +229,7 @@ class ArticleRow extends StatelessWidget {
                   color: style.color.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                // Bila teks kategori sudah tampil (showCategory),
-                // label ikon tidak dibacakan ganda oleh TalkBack.
-                child: showCategory
-                    ? ExcludeSemantics(
-                        child: categoryIcon(
-                            article.category, 26, style.color))
-                    : categoryIcon(article.category, 26, style.color),
+                child: categoryIcon(article.category, 26, style.color),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -223,8 +238,8 @@ class ArticleRow extends StatelessWidget {
                   children: [
                     if (showCategory) ...[
                       Text(article.category,
-                          style: const TextStyle(
-                              fontSize: 12, color: kOnSurfaceVariant)),
+                          style: TextStyle(
+                              fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                       const SizedBox(height: 2),
                     ],
                     Text(article.title,
@@ -235,15 +250,15 @@ class ArticleRow extends StatelessWidget {
                     if (subtitle.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(subtitle,
-                          style: const TextStyle(
-                              fontSize: 12, color: kOnSurfaceVariant),
+                          style: TextStyle(
+                              fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
                     ],
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: kOnSurfaceVariant),
+              Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -252,15 +267,13 @@ class ArticleRow extends StatelessWidget {
   }
 }
 
-/// Kartu kategori grid: ikon besar + judul + pill jumlah artikel.
+/// Kartu kategori grid: ikon besar + judul.
 class CategoryCard extends StatelessWidget {
   final String category;
-  final int count;
   final int mode; // 2 = 2 kolom, 3 = 3 kolom, 1 = daftar
   final VoidCallback onTap;
   const CategoryCard(
       {required this.category,
-      required this.count,
       required this.mode,
       required this.onTap,
       super.key});
@@ -270,133 +283,54 @@ class CategoryCard extends StatelessWidget {
     final style = categoryStyle(category);
     if (mode == 1) {
       return InfoRow(
-          iconChild:
-              ExcludeSemantics(child: categoryIcon(category, 24, kPrimary)),
+          iconChild: categoryIcon(category, 24, kPrimary),
           title: category,
-          description: '$count artikel',
+          description: '',
           onTap: onTap);
     }
     return Card(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: kOutlineVariant)),
+          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       elevation: 2,
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       margin: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Teks kartu sudah mengumumkan kategori, jadi label
-                  // ikon tidak dibacakan ganda oleh TalkBack.
-                  ExcludeSemantics(
-                      child: categoryIcon(
-                          category, mode == 3 ? 28 : 36, style.color)),
-                  const SizedBox(height: 8),
-                  // Mode 3 kolom: kartu sempit (~101px di layar 360px) sehingga
-                  // label satu kata yang panjang putus di tengah kata
-                  // ("IMUNOSERO / LOGI"). FittedBox scaleDown mengecilkan
-                  // label HANYA bila tidak muat, jadi satu baris utuh; label
-                  // pendek tetap 14px seperti sebelumnya. Label ber-spasi
-                  // (KIMIA KLINIK) sudah putus rapi di spasi, jadi tetap
-                  // memakai Text 2 baris biasa. Mode 2 kolom cukup lebar
-                  // sehingga tidak diubah.
-                  if (mode == 3 && !category.contains(' '))
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(category,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold),
-                          maxLines: 1),
-                    )
-                  else
-                    Text(category,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-            // Lencana jumlah: diposisikan di sudut (bukan baris baru)
-            // supaya tinggi kartu tidak berubah dan tidak meluber di
-            // mode 3 kolom yang sempit.
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Semantics(
-                label: '$count artikel',
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: kSurfaceVariant,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text('$count',
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              categoryIcon(category, mode == 3 ? 28 : 36, style.color),
+              const SizedBox(height: 8),
+              // Mode 3 kolom: kartu sempit (~101px di layar 360px) sehingga
+              // label satu kata yang panjang putus di tengah kata
+              // ("IMUNOSERO / LOGI"). FittedBox scaleDown mengecilkan
+              // label HANYA bila tidak muat, jadi satu baris utuh; label
+              // pendek tetap 14px seperti sebelumnya. Label ber-spasi
+              // (KIMIA KLINIK) sudah putus rapi di spasi, jadi tetap
+              // memakai Text 2 baris biasa. Mode 2 kolom cukup lebar
+              // sehingga tidak diubah.
+              if (mode == 3 && !category.contains(' '))
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(category,
+                      textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: kOnSurfaceVariant)),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Kolom pencarian bersama (Beranda + layar kategori): ikon cari,
-/// tombol hapus saat ada kueri, latar dan radius yang sama.
-/// Menggantikan dua salinan InputDecoration yang sebelumnya identik.
-class SearchField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hintText;
-  final bool showClear;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-  const SearchField({
-    required this.controller,
-    required this.hintText,
-    required this.showClear,
-    required this.onChanged,
-    required this.onClear,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        hintText: hintText,
-        prefixIcon: const Icon(Icons.search, color: kPrimary),
-        suffixIcon: showClear
-            ? IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: onClear,
-              )
-            : null,
-        filled: true,
-        fillColor: kSurfaceVariant,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: kPrimary, width: 1.5),
+                          fontSize: 14, fontWeight: FontWeight.bold),
+                      maxLines: 1),
+                )
+              else
+                Text(category,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.bold),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
+            ],
+          ),
         ),
       ),
     );
