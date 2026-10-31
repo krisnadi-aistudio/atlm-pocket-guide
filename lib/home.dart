@@ -135,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Selamat datang di Buku Saku ATLM',
+                const Text('Mau cari apa hari ini?',
                     style:
                         TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
