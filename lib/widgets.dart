@@ -302,8 +302,12 @@ class CategoryCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              categoryIcon(category, mode == 3 ? 28 : 36, style.color),
+              Center(
+                child: categoryIcon(
+                    category, mode == 3 ? 28 : 36, style.color),
+              ),
               const SizedBox(height: 8),
               // Mode 3 kolom: kartu sempit (~101px di layar 360px) sehingga
               // label satu kata yang panjang putus di tengah kata
