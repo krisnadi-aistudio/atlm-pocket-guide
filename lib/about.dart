@@ -25,7 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     PackageInfo.fromPlatform().then((info) {
       if (mounted) {
         // Pill & footer tampil mayor.minor ('Versi 1.5'); nomor build
-        // lengkap tampil di subtitle baris Tentang + halaman Tentang.
+        // lengkap tampil di baris Versi Aplikasi + halaman Tentang.
         setState(() {
           _versionText =
               'Versi ${info.version.split('.').take(2).join('.')}';
@@ -33,7 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Versi ${info.version} (build ${info.buildNumber})';
         });
       }
-    }).catchError((_) {});
+    });
   }
 
   void _openFeatures(BuildContext context) {
@@ -63,10 +63,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Pengaturan',
+          title: Text('Pengaturan',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, color: kPrimary)),
-          backgroundColor: kBackground,
+                  fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -74,36 +74,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _SettingsGroup(rows: [
-                _SettingsRow(
-                    icon: Icons.lightbulb,
-                    title: 'Fitur',
-                    onTap: () => _openFeatures(context)),
-                _SettingsRow(
-                    icon: Icons.gavel,
-                    title: 'Syarat & Ketentuan',
-                    onTap: () => _openInfo(context, _InfoPage.terms)),
-                _SettingsRow(
-                    icon: Icons.policy,
-                    title: 'Kebijakan Privasi',
-                    onTap: () => _openInfo(context, _InfoPage.privacy)),
-                _SettingsRow(
-                    icon: Icons.medical_services,
-                    title: 'Disclaimer Medis',
-                    onTap: () => _openDisclaimer(context)),
-              ]),
-              const SizedBox(height: 16),
-              _SettingsGroup(rows: [
-                _SettingsRow(
-                    icon: Icons.info,
-                    title: 'Tentang Aplikasi',
-                    subtitle: _fullVersionText,
-                    onTap: () => _openAboutApp(context)),
-                _SettingsRow(
-                    icon: Icons.code,
-                    title: 'Lisensi Open Source',
-                    onTap: () => _openInfo(context, _InfoPage.openSource)),
-              ]),
+              _SettingsRow(
+                  icon: Icons.lightbulb,
+                  title: 'Fitur',
+                  onTap: () => _openFeatures(context)),
+              const SizedBox(height: 12),
+              _SettingsRow(
+                  icon: Icons.gavel,
+                  title: 'Syarat & Ketentuan',
+                  onTap: () => _openInfo(context, _InfoPage.terms)),
+              const SizedBox(height: 12),
+              _SettingsRow(
+                  icon: Icons.policy,
+                  title: 'Kebijakan Privasi',
+                  onTap: () => _openInfo(context, _InfoPage.privacy)),
+              const SizedBox(height: 12),
+              _SettingsRow(
+                  icon: Icons.medical_services,
+                  title: 'Disclaimer Medis',
+                  onTap: () => _openDisclaimer(context)),
+              const SizedBox(height: 20),
+              const _SectionLabel(title: 'Informasi'),
+              const SizedBox(height: 12),
+              _SettingsRow(
+                  icon: Icons.info,
+                  title: 'Tentang Aplikasi',
+                  onTap: () => _openAboutApp(context)),
+              const SizedBox(height: 12),
+              _SettingsRow(
+                  icon: Icons.code,
+                  title: 'Lisensi Open Source',
+                  onTap: () => _openInfo(context, _InfoPage.openSource)),
+              const SizedBox(height: 12),
+              _SettingsRow(
+                  icon: Icons.smartphone,
+                  title: 'Versi Aplikasi',
+                  subtitle: _fullVersionText),
               const SizedBox(height: 8),
             ],
           ),
@@ -113,10 +119,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-/// Satu baris pengaturan (tanpa kartu sendiri): dipakai di dalam
-/// _SettingsGroup supaya baris-baris sejenis menyatu dalam satu kartu
-/// dengan pemisah, bukan kartu terpisah per baris. Tinggi baris
-/// minimal 80 (ikon 48 + padding 16) sehingga target sentuh aman.
+/// Baris pengaturan ala SakuMedis: ikon dalam kotak biru muda + judul +
+/// panah (kecuali baris info seperti versi).
 class _SettingsRow extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -127,71 +131,72 @@ class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                  color: kPrimaryContainer,
-                  borderRadius: BorderRadius.circular(12)),
-              child: Icon(icon, color: kPrimary),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(subtitle!,
-                        style: const TextStyle(
-                            fontSize: 13, color: kOnSurfaceVariant)),
-                  ],
-                ],
+    return Card(
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surface,
+      margin: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary),
               ),
-            ),
-            if (onTap != null)
-              const Icon(Icons.chevron_right, color: kOnSurfaceVariant),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(subtitle!,
+                          style: TextStyle(
+                              fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    ],
+                  ],
+                ),
+              ),
+              if (onTap != null)
+                Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Kartu grup baris pengaturan: satu kartu, baris dipisah Divider.
-class _SettingsGroup extends StatelessWidget {
-  final List<Widget> rows;
-  const _SettingsGroup({required this.rows});
+/// Label grup ala SakuMedis: ikon + teks biru.
+class _SectionLabel extends StatelessWidget {
+  final String title;
+  const _SectionLabel({required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: kOutlineVariant)),
-      elevation: 0,
-      color: Colors.white,
-      margin: EdgeInsets.zero,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            rows[i],
-            if (i < rows.length - 1)
-              const Divider(height: 1, color: kOutlineVariant),
-          ],
-        ],
-      ),
+    return Row(
+      children: [
+        Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary, size: 20),
+        const SizedBox(width: 6),
+        Text(title,
+            style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary)),
+      ],
     );
   }
 }
@@ -204,10 +209,10 @@ class _FeaturesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Fitur',
+          title: Text('Fitur',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, color: kPrimary)),
-          backgroundColor: kBackground,
+                  fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0),
       body: const SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -234,13 +239,6 @@ class _FeaturesPage extends StatelessWidget {
               description:
                   'Semua artikel tersimpan di perangkat, tanpa akun dan tanpa server.',
             ),
-            SizedBox(height: 12),
-            InfoRow(
-              icon: Icons.info_outline,
-              title: 'Batasan yang disengaja',
-              description:
-                  'Tanpa akun, tanpa riwayat baca, dan tanpa bookmark — dibuka untuk satu keperluan, lalu ditutup.',
-            ),
           ],
         ),
       ),
@@ -257,30 +255,30 @@ class _DisclaimerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Disclaimer Medis',
+          title: Text('Disclaimer Medis',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, color: kPrimary)),
-          backgroundColor: kBackground,
+                  fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: kWarningContainer,
+            color: isDarkMode(context) ? kWarningContainerDark : kWarningContainer,
             border: Border.all(color: kWarningBorder),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Penting untuk pengguna',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold, color: kOnWarning)),
-              SizedBox(height: 4),
+                      fontWeight: FontWeight.bold, color: isDarkMode(context) ? kOnWarningDark : kOnWarning)),
+              const SizedBox(height: 4),
               Text(
                   'Aplikasi ini adalah alat bantu referensi, bukan pengganti SOP laboratorium dan penilaian tenaga kompeten.',
-                  style: TextStyle(color: kOnWarning)),
+                  style: TextStyle(color: isDarkMode(context) ? kOnWarningDark : kOnWarning)),
             ],
           ),
         ),
@@ -313,10 +311,10 @@ class _AboutAppPage extends StatelessWidget {
         .toList();
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Tentang Aplikasi',
+          title: Text('Tentang Aplikasi',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, color: kPrimary)),
-          backgroundColor: kBackground,
+                  fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -326,9 +324,9 @@ class _AboutAppPage extends StatelessWidget {
             Card(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: kOutlineVariant)),
+                  side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
               elevation: 2,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               margin: EdgeInsets.zero,
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -341,28 +339,28 @@ class _AboutAppPage extends StatelessWidget {
                             fontSize: 22, fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center),
                     const SizedBox(height: 4),
-                    const Text('Referensi cepat analis laboratorium',
+                    Text('Referensi cepat analis laboratorium',
                         style: TextStyle(
-                            fontSize: 14, color: kOnSurfaceVariant),
+                            fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         textAlign: TextAlign.center),
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: kPrimaryContainer,
+                        color: Theme.of(context).colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(versionText,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: kOnPrimaryContainer)),
+                              color: Theme.of(context).colorScheme.onPrimaryContainer)),
                     ),
                     const SizedBox(height: 6),
                     Text(fullVersionText,
-                        style: const TextStyle(
-                            fontSize: 12, color: kOnSurfaceVariant)),
+                        style: TextStyle(
+                            fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -376,9 +374,9 @@ class _AboutAppPage extends StatelessWidget {
             Card(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: kOutlineVariant)),
+                  side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
               elevation: 2,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               margin: EdgeInsets.zero,
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -389,8 +387,8 @@ class _AboutAppPage extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 17, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    const Text('Analis Teknologi Laboratorium Medik',
-                        style: TextStyle(color: kOnSurfaceVariant)),
+                    Text('Analis Teknologi Laboratorium Medik',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     const SizedBox(height: 12),
                     Container(
                         width: 48,
@@ -399,8 +397,8 @@ class _AboutAppPage extends StatelessWidget {
                             color: kAmber,
                             borderRadius: BorderRadius.circular(2))),
                     const SizedBox(height: 12),
-                    const Text('Buku saku untuk analis laboratorium',
-                        style: TextStyle(color: kOnSurfaceVariant)),
+                    Text('Buku saku untuk analis laboratorium',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -419,16 +417,16 @@ class _AboutAppPage extends StatelessWidget {
               ],
             ],
             const SizedBox(height: 16),
-            const Center(
+            Center(
               child: Column(
                 children: [
                   Text('© 2026 Buku Saku ATLM',
                       style: TextStyle(
-                          fontSize: 12, color: kOnSurfaceVariant)),
-                  SizedBox(height: 2),
+                          fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 2),
                   Text('Dibuat untuk analis laboratorium',
                       style: TextStyle(
-                          fontSize: 12, color: kOnSurfaceVariant)),
+                          fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
             ),
@@ -462,9 +460,9 @@ class _InfoPageScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
           title: Text(_title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, color: kPrimary)),
-          backgroundColor: kBackground,
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -472,45 +470,31 @@ class _InfoPageScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (page == _InfoPage.terms) ...[
-              const _Subheading('Tujuan'),
-              const SizedBox(height: 6),
               const Text(
                   'Buku Saku ATLM adalah alat bantu referensi offline untuk analis laboratorium medik dan pembelajar di bidang laboratorium medik.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 16),
-              const _Subheading('Bukan pengganti SOP'),
-              const SizedBox(height: 6),
+              const SizedBox(height: 12),
               const Text(
                   'Isi aplikasi ini bukan pengganti Standar Operasional Prosedur (SOP) laboratorium, instruksi pabrikan alat dan reagen, maupun penilaian tenaga kesehatan yang kompeten. Bila ada perbedaan antara aplikasi dan SOP yang berlaku, SOP yang berlaku yang dipakai.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 16),
-              const _Subheading('Offline dan gratis'),
-              const SizedBox(height: 6),
+              const SizedBox(height: 12),
               const Text(
                   'Seluruh konten tersimpan di perangkat dan dapat dipakai tanpa koneksi internet. Aplikasi ini tidak memungut biaya dan tidak menampilkan iklan.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
             ],
             if (page == _InfoPage.privacy) ...[
-              const _Subheading('Ringkas'),
-              const SizedBox(height: 6),
               const Text(
                   'Buku Saku ATLM tidak mengumpulkan, mengirim, atau membagikan data pengguna apa pun. Aplikasi ini tidak memakai akun, tidak memakai server, dan tidak memakai pelacak.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 16),
-              const _Subheading('Data yang disimpan'),
-              const SizedBox(height: 6),
+              const SizedBox(height: 12),
               const Text(
                   'Satu-satunya yang tersimpan lokal di perangkat adalah preferensi tampilan (mode grid kategori). Tidak ada data pribadi, tidak ada riwayat baca, tidak ada bookmark.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 16),
-              const _Subheading('Izin'),
-              const SizedBox(height: 6),
+              const SizedBox(height: 12),
               const Text(
                   'Aplikasi ini tidak meminta izin apa pun di perangkat (tanpa akses kamera, lokasi, kontak, atau penyimpanan).',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 16),
-              const _Subheading('Menghapus aplikasi'),
-              const SizedBox(height: 6),
+              const SizedBox(height: 12),
               const Text(
                   'Karena tidak ada data yang dikumpulkan, tidak ada data yang dapat dihapus dari server — menghapus aplikasi sudah cukup.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
@@ -519,9 +503,7 @@ class _InfoPageScreen extends StatelessWidget {
               const Text(
                   'Aplikasi ini dibangun di atas perangkat lunak sumber terbuka berikut, dipakai sesuai lisensinya masing-masing. Terima kasih kepada para kontributornya.',
                   style: TextStyle(fontSize: 16, height: 1.5)),
-              const SizedBox(height: 16),
-              const _Subheading('Pustaka dan ikon'),
-              const SizedBox(height: 6),
+              const SizedBox(height: 12),
               const InfoRow(
                   icon: Icons.code,
                   title: 'Flutter & Material 3',
@@ -559,18 +541,5 @@ class _InfoPageScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Subjudul berpola di halaman info: memecah dinding teks supaya
-/// dokumen legal mudah dipindai.
-class _Subheading extends StatelessWidget {
-  final String title;
-  const _Subheading(this.title);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
   }
 }
