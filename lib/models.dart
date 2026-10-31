@@ -23,10 +23,7 @@ class Article {
         title: j['title'] as String,
         category: j['category'] as String,
         sub: j['sub'] as String?,
-        // Normalisasi CRLF -> LF di sini supaya split('\n\n') di
-        // keywords dan parseBodySections tidak pernah gagal hanya
-        // karena konten diedit di Windows.
-        body: ((j['body'] as String?) ?? '').replaceAll('\r\n', '\n'),
+        body: (j['body'] as String?) ?? '',
         reference: (j['reference'] as String?) ?? '',
       );
 
@@ -53,28 +50,12 @@ class Article {
   }
 }
 
-/// Hasil pemuatan konten: artikel yang lolos + jumlah item yang
-/// dilewati karena rusak. Satu item rusak tidak lagi mematikan
-/// seluruh aplikasi; UI menampilkan banner bila skipped > 0.
-class ArticlesLoadResult {
-  final List<Article> articles;
-  final int skipped;
-  const ArticlesLoadResult(this.articles, this.skipped);
-}
-
-Future<ArticlesLoadResult> loadArticles() async {
+Future<List<Article>> loadArticles() async {
   final raw = await rootBundle.loadString('assets/articles.json');
   final list = jsonDecode(raw) as List<dynamic>;
-  final articles = <Article>[];
-  var skipped = 0;
-  for (final e in list) {
-    try {
-      articles.add(Article.fromJson(e as Map<String, dynamic>));
-    } catch (_) {
-      skipped++;
-    }
-  }
-  return ArticlesLoadResult(articles, skipped);
+  return list
+      .map((e) => Article.fromJson(e as Map<String, dynamic>))
+      .toList();
 }
 
 List<Article> searchArticles(List<Article> all, String query) {
