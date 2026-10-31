@@ -74,10 +74,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const _SectionLabel(title: 'Umum'),
+              const SizedBox(height: 12),
               _SettingsRow(
                   icon: Icons.lightbulb,
                   title: 'Fitur',
                   onTap: () => _openFeatures(context)),
+              const SizedBox(height: 20),
+              const _SectionLabel(title: 'Data & Privasi'),
               const SizedBox(height: 12),
               _SettingsRow(
                   icon: Icons.gavel,
