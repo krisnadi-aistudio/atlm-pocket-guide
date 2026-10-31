@@ -6,10 +6,11 @@ import 'widgets.dart';
 /// Layar detail artikel gaya SakuMedis: tab di atas (Materi / Bukti /
 /// Sumber) untuk SEMUA artikel.
 /// - Materi (build 1.5.2): seksi lipat (accordion) — tiap blok berlabel
-///   jadi kartu lipat (seksi pertama terbuka default); beberapa seksi
+///   jadi kartu yang diketuk dulu baru isinya mengembang; beberapa seksi
 ///   boleh terbuka bersamaan; auto-scroll hanya bila header terpotong
 ///   atau di luar pandang. Catatan penting di PALING BAWAH artikel
-///   TERTUTUP secara default — hanya ketukan pengguna yang membukanya, dan membuka
+///   (perintah user 27 Okt 2026), TERTUTUP secara default (perintah user
+///   27 Okt 2026) — hanya ketukan pengguna yang membukanya, dan membuka
 ///   seksi lain tidak pernah membukanya. Parser dipakai bersama dari
 ///   models.dart (parseBodySections) — bukan parser kedua.
 ///   Passthrough pencarian: artikel dibuka dari hasil pencarian langsung
@@ -17,7 +18,7 @@ import 'widgets.dart';
 /// - Bukti: daftar literatur dari field referensi, dipecah per sitasi.
 ///   Bila referensi masih placeholder PERLU VERIFIKASI / [CONTOH],
 ///   tampil apa adanya sebagai catatan — tidak dikarang.
-/// - Sumber: acuan artikel (teks referensi utuh). Catatan SOP DIHAPUS
+/// - Sumber: acuan artikel (teks referensi utuh). Catatan SOP dihapus
 ///   (basis aplikasi = referensi jurnal, bukan SOP).
 /// Tanpa bookmark (dihapus permanen). Bench Mode pindah ke AppBar
 /// (ikon lampu + indikator aktif); pill melayang DIHAPUS.
@@ -50,20 +51,6 @@ class _DetailScreenState extends State<DetailScreen> {
     } else {
       await WakelockPlus.disable();
     }
-    if (!mounted) return;
-    if (next) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Layar menyala sampai artikel ditutup'),
-          action: SnackBarAction(
-            label: 'Matikan',
-            onPressed: _toggleBenchMode,
-          ),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    }
   }
 
   /// Sitasi asli dari field referensi, dipecah per ';'. Null bila tidak
@@ -91,23 +78,9 @@ class _DetailScreenState extends State<DetailScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(article.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: kPrimary)),
-              Text(article.category,
-                  style: const TextStyle(
-                      fontSize: 12, color: kOnSurfaceVariant)),
-            ],
-          ),
-          backgroundColor: kBackground,
+          title: Text(article.category,
+              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.primary)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 1,
           actions: [
             IconButton(
@@ -115,18 +88,20 @@ class _DetailScreenState extends State<DetailScreen> {
                   _keepScreenOn
                       ? Icons.lightbulb
                       : Icons.lightbulb_outline,
-                  color: _keepScreenOn ? kPrimary : kOnSurfaceVariant),
+                  color: _keepScreenOn
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant),
               tooltip: _keepScreenOn
                   ? 'Matikan mode layar menyala'
                   : 'Mode layar menyala (Bench Mode)',
               onPressed: _toggleBenchMode,
             ),
           ],
-          bottom: const TabBar(
-            labelColor: kPrimary,
-            unselectedLabelColor: kOnSurfaceVariant,
-            indicatorColor: kPrimary,
-            tabs: [
+          bottom: TabBar(
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            indicatorColor: Theme.of(context).colorScheme.primary,
+            tabs: const [
               Tab(text: 'Materi'),
               Tab(text: 'Bukti'),
               Tab(text: 'Sumber'),
@@ -152,8 +127,7 @@ class _DetailScreenState extends State<DetailScreen> {
 /// - Catatan penting (dulu kartu Kritis): di PALING BAWAH artikel,
 ///   tertutup default, hanya ketukan pengguna yang membukanya;
 ///   membuka seksi lain tidak pernah membukanya.
-/// - Seksi berlabel: seksi pertama terbuka default (atau seksi yang
-///   cocok dengan kueri); sisanya tertutup, boleh terbuka bersamaan.
+/// - Seksi berlabel: tertutup default, boleh terbuka bersamaan.
 /// - Auto-scroll: HANYA bila header terpotong/di luar pandang, durasi
 ///   pendek (150ms), header dibawa dekat atas.
 /// - Passthrough: autoOpenQuery membuka seksi pertama yang cocok.
@@ -186,29 +160,15 @@ class _MateriTabState extends State<_MateriTab> {
       _sectionKeys[i] = GlobalKey();
     }
     final q = widget.autoOpenQuery;
-    var openedByQuery = false;
     if (q != null && q.trim().isNotEmpty) {
       final idx = findSectionForQuery(_sections, q);
       if (idx != null) {
-        openedByQuery = true;
         if (_sections[idx].kind == SectionKind.labeled) {
           _openSections.add(idx);
         }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _maybeScrollToSection(idx);
         });
-      }
-    }
-    if (!openedByQuery) {
-      // Tanpa kueri (atau kueri tanpa kecocokan): buka seksi
-      // berlabel pertama supaya artikel langsung terbaca; seksi
-      // lain tetap tertutup. Catatan penting tidak pernah dibuka
-      // otomatis.
-      for (var i = 0; i < _sections.length; i++) {
-        if (_sections[i].kind == SectionKind.labeled) {
-          _openSections.add(i);
-          break;
-        }
       }
     }
   }
@@ -273,6 +233,19 @@ class _MateriTabState extends State<_MateriTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Text(article.category,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer)),
+          ),
+          const SizedBox(height: 12),
           Text(article.title,
               style:
                   const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
@@ -281,7 +254,7 @@ class _MateriTabState extends State<_MateriTab> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: kWarningContainer,
+                color: isDarkMode(context) ? kWarningContainerDark : kWarningContainer,
                 border: Border.all(color: kWarningBorder, width: 1.5),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -304,8 +277,8 @@ class _MateriTabState extends State<_MateriTab> {
               _sectionWidget(i),
               const SizedBox(height: 14),
             ],
-          // Catatan penting: paling bawah artikel
-          // (bukan lagi di bawah judul).
+          // Catatan penting: paling bawah artikel (perintah user
+          // 27 Okt 2026 — bukan lagi di bawah judul).
           for (final ci in _criticalIndices) ...[
             _criticalCard(_sections[ci], _openCriticals.contains(ci),
                 () => _toggleCritical(ci)),
@@ -324,8 +297,8 @@ class _MateriTabState extends State<_MateriTab> {
         return Container(
           key: _sectionKeys[index],
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: kOutlineVariant),
+            color: Theme.of(context).colorScheme.surface,
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
             borderRadius: BorderRadius.circular(12),
           ),
           child: InkWell(
@@ -348,7 +321,7 @@ class _MateriTabState extends State<_MateriTab> {
                           open
                               ? Icons.keyboard_arrow_up
                               : Icons.keyboard_arrow_down,
-                          color: kPrimary),
+                          color: Theme.of(context).colorScheme.primary),
                     ],
                   ),
                   if (open) ...[
@@ -396,30 +369,20 @@ class _MateriTabState extends State<_MateriTab> {
           children: [
             for (var i = 0; i < f.assets.length; i++) ...[
               if (i > 0) const SizedBox(height: 12),
-              Image.asset(f.assets[i],
-                  fit: BoxFit.contain,
-                  semanticLabel:
-                      'Rumus ${widget.article.title} bagian ${i + 1}',
-                  errorBuilder: (context, error, stackTrace) => Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: kSurfaceVariant,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.broken_image,
-                                color: kOnSurfaceVariant, size: 18),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                  'Gambar rumus tidak dapat dimuat.',
-                                  style: TextStyle(
-                                      color: kOnSurfaceVariant)),
-                            ),
-                          ],
-                        ),
-                      )),
+              // Tinta PNG rumus hitam di atas transparan: di mode gelap
+              // ia butuh wadah putih supaya tetap terbaca. Mode terang
+              // tidak berubah (tanpa wadah, seperti sebelumnya).
+              if (isDarkMode(context))
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Image.asset(f.assets[i], fit: BoxFit.contain),
+                )
+              else
+                Image.asset(f.assets[i], fit: BoxFit.contain),
             ],
             if (f.note.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -469,13 +432,13 @@ class _MateriTabState extends State<_MateriTab> {
           width: 24,
           height: 24,
           alignment: Alignment.center,
-          decoration: const BoxDecoration(
-              color: kPrimaryContainer, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer, shape: BoxShape.circle),
           child: Text('$number',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: kOnPrimaryContainer)),
+                  color: Theme.of(context).colorScheme.onPrimaryContainer)),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -488,7 +451,7 @@ class _MateriTabState extends State<_MateriTab> {
   Widget _interpretationTable(List<InterpretationRow> rows) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: kOutlineVariant),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
       child: ClipRRect(
@@ -498,37 +461,11 @@ class _MateriTabState extends State<_MateriTab> {
             0: FlexColumnWidth(2),
             1: FlexColumnWidth(3),
           },
-          border: const TableBorder(
-            horizontalInside: BorderSide(color: kOutlineVariant),
-            verticalInside: BorderSide(color: kOutlineVariant),
+          border: TableBorder(
+            horizontalInside: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+            verticalInside: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           children: [
-            const TableRow(children: [
-              TableCell(
-                child: ColoredBox(
-                  color: kSurfaceVariant,
-                  child: Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Text('Hasil',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ),
-              TableCell(
-                child: ColoredBox(
-                  color: kSurfaceVariant,
-                  child: Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Text('Keterangan',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ),
-            ]),
             for (final r in rows)
               TableRow(children: [
                 TableCell(
@@ -561,7 +498,7 @@ class _MateriTabState extends State<_MateriTab> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: kCriticalContainer,
+        color: isDarkMode(context) ? kCriticalContainerDark : kCriticalContainer,
         border: Border.all(color: kCriticalBorder),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -575,17 +512,17 @@ class _MateriTabState extends State<_MateriTab> {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text('Catatan penting',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFB3261E))),
+                            color: isDarkMode(context) ? kCriticalTextDark : const Color(0xFFB3261E))),
                   ),
                   Icon(
                       open
                           ? Icons.keyboard_arrow_up
                           : Icons.keyboard_arrow_down,
-                      color: const Color(0xFFB3261E)),
+                      color: isDarkMode(context) ? kCriticalTextDark : const Color(0xFFB3261E)),
                 ],
               ),
               if (open) ...[
@@ -613,13 +550,13 @@ class _MateriTabState extends State<_MateriTab> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kWarningContainer,
+        color: isDarkMode(context) ? kWarningContainerDark : kWarningContainer,
         border: Border.all(color: kWarningBorder),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(text,
-          style: const TextStyle(
-              fontWeight: FontWeight.bold, color: kOnWarning)),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, color: isDarkMode(context) ? kOnWarningDark : kOnWarning)),
     );
   }
 
@@ -638,13 +575,13 @@ class _MateriTabState extends State<_MateriTab> {
               width: 24,
               height: 24,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                  color: kPrimaryContainer, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer, shape: BoxShape.circle),
               child: Text(stepMatch.group(1)!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: kOnPrimaryContainer)),
+                      color: Theme.of(context).colorScheme.onPrimaryContainer)),
             ),
             const SizedBox(width: 10),
             Expanded(child: Text(stepMatch.group(2)!)),
@@ -675,7 +612,7 @@ class _MateriTabState extends State<_MateriTab> {
         !text.substring(0, colon).contains(RegExp(r'[0-9]'))) {
       return RichText(
         text: TextSpan(
-          style: const TextStyle(fontSize: 16, color: kOnSurface, height: 1.5),
+          style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface, height: 1.5),
           children: [
             TextSpan(
                 text: '${text.substring(0, colon)}: ',
@@ -722,7 +659,7 @@ class _BuktiTab extends StatelessWidget {
 }
 
 /// Tab Sumber: acuan artikel (teks referensi utuh). Catatan SOP
-/// dihapus (basis = referensi jurnal).
+/// dihapus atas perintah user 27 Okt 2026 (basis = referensi jurnal).
 class _SumberTab extends StatelessWidget {
   final Article article;
   final List<String>? citations;
@@ -740,9 +677,9 @@ class _SumberTab extends StatelessWidget {
           Card(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: kOutlineVariant)),
+                side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
             elevation: 0,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             margin: EdgeInsets.zero,
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -776,9 +713,9 @@ class _LiteratureCard extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: kOutlineVariant)),
+          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       elevation: 0,
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -789,14 +726,14 @@ class _LiteratureCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: kPrimaryContainer,
+                color: Theme.of(context).colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text('$index. Literatur',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: kOnPrimaryContainer)),
+                      color: Theme.of(context).colorScheme.onPrimaryContainer)),
             ),
             const SizedBox(height: 8),
             Text(text, style: const TextStyle(fontSize: 15, height: 1.5)),
@@ -816,19 +753,19 @@ class _NoteCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kSurfaceVariant,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline,
-              color: kOnSurfaceVariant, size: 18),
+          Icon(Icons.info_outline,
+              color: Theme.of(context).colorScheme.onSurfaceVariant, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(text,
                 style:
-                    const TextStyle(color: kOnSurfaceVariant, height: 1.5)),
+                    TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5)),
           ),
         ],
       ),
