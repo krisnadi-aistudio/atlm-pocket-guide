@@ -67,42 +67,59 @@ class _CategoryScreenState extends State<CategoryScreen> {
         return _buildSubList(context, subs);
       }
     }
-    final filtered = _query.isEmpty
+    final visible = _query.isEmpty
         ? widget.articles
         : widget.articles
             .where((a) =>
                 a.title.toLowerCase().contains(_query.toLowerCase()) ||
                 a.body.toLowerCase().contains(_query.toLowerCase()))
             .toList();
-    // Urutan dasar layar kategori selalu A–Z (case-insensitive);
-    // hasil filter pencarian mewarisi urutan ini.
-    final visible = List.of(filtered)
-      ..sort((a, b) =>
-          a.title.toLowerCase().compareTo(b.title.toLowerCase()));
     return Scaffold(
       appBar: AppBar(
         title: Text(
             widget.sub == null
                 ? widget.category
                 : '${widget.category} • ${widget.sub}',
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: kPrimary)),
-        backgroundColor: kBackground,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary)),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            SearchField(
+            TextField(
               controller: _controller,
-              hintText: 'Cari judul atau kata kunci di kategori ini…',
-              showClear: _query.isNotEmpty,
               onChanged: (v) => setState(() => _query = v),
-              onClear: () {
-                _controller.clear();
-                setState(() => _query = '');
-              },
+              decoration: InputDecoration(
+                hintText: 'Cari judul atau kata kunci di kategori ini…',
+                prefixIcon: Icon(Icons.search,
+                    color: Theme.of(context).colorScheme.primary),
+                suffixIcon: _query.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() => _query = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 1.5),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             Align(
@@ -110,38 +127,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
               child: Text(
                   _query.isEmpty
                       ? '${widget.articles.length} artikel'
-                      : '${visible.length} hasil untuk “$_query”.',
-                  style: const TextStyle(
-                      fontSize: 13, color: kOnSurfaceVariant)),
+                      : visible.isEmpty
+                          ? 'Tidak ditemukan untuk “$_query”.'
+                          : '${visible.length} hasil untuk “$_query”.',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color:
+                          Theme.of(context).colorScheme.onSurfaceVariant)),
             ),
             const SizedBox(height: 8),
             Expanded(
               child: visible.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _query.isEmpty
-                                  ? 'Kategori ini belum punya artikel.'
-                                  : 'Tidak ada hasil untuk “$_query”.',
-                              textAlign: TextAlign.center,
-                            ),
-                            if (_query.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              OutlinedButton(
-                                onPressed: () {
-                                  _controller.clear();
-                                  setState(() => _query = '');
-                                },
-                                child: const Text('Hapus pencarian'),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
+                  ? const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text('Tidak ada artikel di kategori ini.'),
                     )
                   : ListView.separated(
                       itemCount: visible.length,
@@ -176,9 +175,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.category,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: kPrimary)),
-        backgroundColor: kBackground,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary)),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
       ),
       body: Padding(
@@ -187,8 +187,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('${subs.length} kelompok • ${widget.articles.length} artikel',
-                style:
-                    const TextStyle(fontSize: 13, color: kOnSurfaceVariant)),
+                style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(height: 12),
             Expanded(
               child: ListView.separated(
@@ -200,9 +201,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   return Card(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: kOutlineVariant)),
+                        side: BorderSide(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .outlineVariant)),
                     elevation: 2,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     margin: EdgeInsets.zero,
                     child: InkWell(
                       onTap: () => Navigator.of(context).push(
@@ -215,7 +219,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                       .toList()))),
                       borderRadius: BorderRadius.circular(16),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
+                        padding:
+                            const EdgeInsets.fromLTRB(16, 16, 12, 16),
                         child: Row(
                           children: [
                             Expanded(
@@ -229,14 +234,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                           fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 4),
                                   Text('$n artikel',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 13,
-                                          color: kOnSurfaceVariant)),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant)),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right,
-                                color: kOnSurfaceVariant),
+                            Icon(Icons.chevron_right,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant),
                           ],
                         ),
                       ),
