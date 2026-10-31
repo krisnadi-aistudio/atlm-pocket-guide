@@ -5,6 +5,7 @@ class Article {
   final String id;
   final String title;
   final String category;
+  final String? sub;
   final String body;
   final String reference;
 
@@ -12,6 +13,7 @@ class Article {
     required this.id,
     required this.title,
     required this.category,
+    this.sub,
     required this.body,
     required this.reference,
   });
@@ -20,6 +22,7 @@ class Article {
         id: j['id'] as String,
         title: j['title'] as String,
         category: j['category'] as String,
+        sub: j['sub'] as String?,
         // Normalisasi CRLF -> LF di sini supaya split('\n\n') di
         // keywords dan parseBodySections tidak pernah gagal hanya
         // karena konten diedit di Windows.
