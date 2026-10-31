@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Ikon kategori — ronde 3.
+/// Ikon kategori — ronde 3 (disetujui user 27 Okt 2026).
 ///
 /// Pemetaan final:
 /// - HEMATOLOGI: blood-cells (Health Icons) — gugus sel darah merah.
@@ -78,7 +78,7 @@ Paint _fill(Color color) => Paint()
   ..style = PaintingStyle.fill;
 
 /// Gumpalan trombosit v3: 3 trombosit + 2 serat fibrin gelombang.
-/// Geometri = pratinjau ronde 3 (serat dipertebal
+/// Geometri = pratinjau ronde 3 yang disetujui user (serat dipertebal
 /// dari v2 supaya terbaca di 24-26px).
 class _ClotV3Painter extends CustomPainter {
   final Color color;
