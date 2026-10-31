@@ -6,6 +6,7 @@ import 'widgets.dart';
 import 'category.dart';
 import 'detail.dart';
 import 'about.dart';
+import 'theme_controller.dart';
 
 const _gridModeKey = 'grid_mode'; // 2 = 2 kolom, 3 = 3 kolom, 1 = daftar
 
@@ -84,56 +85,70 @@ class _HomeScreenState extends State<HomeScreen> {
     return SafeArea(
       child: CustomScrollView(
         slivers: [
+          // Header minimalis 1 baris ala SakuMedis: logo + nama,
+          // nempel di atas saat scroll (freeze).
+          SliverAppBar(
+            pinned: true,
+            backgroundColor:
+                Theme.of(context).scaffoldBackgroundColor,
+            elevation: 0,
+            titleSpacing: 16,
+            title: Row(
+              children: [
+                const LabLogo(32),
+                const SizedBox(width: 10),
+                Text('SakuATLM',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary)),
+              ],
+            ),
+            actions: [
+              // Tombol mode gelap di samping Pengaturan.
+              IconButton(
+                icon: Icon(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Icons.light_mode
+                      : Icons.dark_mode,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                tooltip: 'Mode gelap',
+                onPressed: () => ThemeController.toggle(context),
+              ),
+              // Pengaturan (titik 3).
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert,
+                    color: Theme.of(context).colorScheme.primary),
+                tooltip: 'Pengaturan',
+                onSelected: (v) {
+                  if (v == 'settings') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            SettingsScreen(articles: widget.articles)));
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings,
+                            color:
+                                Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 12),
+                        const Text('Pengaturan'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                Row(
-                  children: [
-                    const LabLogo(44),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Buku Saku ATLM',
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary)),
-                          Text(
-                              'Referensi cepat analis laboratorium',
-                              style: TextStyle(
-                                  fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                        ],
-                      ),
-                    ),
-                    // Pengaturan pindah ke sini (titik 3); tab bawah dihapus.
-                    PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert, color: Theme.of(context).colorScheme.primary),
-                      tooltip: 'Pengaturan',
-                      onSelected: (v) {
-                        if (v == 'settings') {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => SettingsScreen(
-                                  articles: widget.articles)));
-                        }
-                      },
-                      itemBuilder: (_) => [
-                        PopupMenuItem(
-                          value: 'settings',
-                          child: Row(
-                            children: [
-                              Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
-                              const SizedBox(width: 12),
-                              const Text('Pengaturan'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 16),
                 const Text('Mau cari apa hari ini?',
                     style:
@@ -144,6 +159,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   onChanged: (v) => setState(() => _query = v),
                   decoration: InputDecoration(
                     hintText: 'Cari istilah, pemeriksaan, atau spesimen…',
+                    hintStyle: const TextStyle(fontSize: 14),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     prefixIcon:
                         Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
                     suffixIcon: _query.isNotEmpty
