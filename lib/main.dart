@@ -30,6 +30,25 @@ class AtlmApp extends StatelessWidget {
         scaffoldBackgroundColor: kBackground,
         useMaterial3: true,
       ),
+      // Tema gelap mengikuti pengaturan sistem Android. Warna kategori
+      // (ikon/label) TIDAK berubah; hanya permukaan, teks, dan aksen
+      // yang menyesuaikan agar tetap terbaca di latar gelap.
+      darkTheme: ThemeData(
+        colorScheme: const ColorScheme.dark(
+          primary: kPrimaryDark,
+          onPrimary: kOnPrimaryDark,
+          primaryContainer: kPrimaryContainerDark,
+          onPrimaryContainer: kOnPrimaryContainerDark,
+          surface: kSurfaceDark,
+          onSurface: kOnSurfaceDark,
+          surfaceContainerHighest: kSurfaceVariantDark,
+          onSurfaceVariant: kOnSurfaceVariantDark,
+          outlineVariant: kOutlineVariantDark,
+        ),
+        scaffoldBackgroundColor: kBackgroundDark,
+        useMaterial3: true,
+      ),
+      themeMode: ThemeMode.system,
       home: const AppShell(),
     );
   }
@@ -46,11 +65,11 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  Future<ArticlesLoadResult> _articlesFuture = loadArticles();
+  Future<List<Article>> _articlesFuture = loadArticles();
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<ArticlesLoadResult>(
+    return FutureBuilder<List<Article>>(
       future: _articlesFuture,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -61,22 +80,13 @@ class _AppShellState extends State<AppShell> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Konten gagal dimuat. Coba lagi.'),
+                  Text('Gagal memuat konten lokal: ${snapshot.error}'),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => setState(() {
                       _articlesFuture = loadArticles();
                     }),
                     child: const Text('Coba lagi'),
-                  ),
-                  const SizedBox(height: 8),
-                  ExpansionTile(
-                    title: const Text('Detail teknis',
-                        style: TextStyle(fontSize: 13)),
-                    children: [
-                      Text('${snapshot.error}',
-                          style: const TextStyle(fontSize: 13)),
-                    ],
                   ),
                 ],
               ),
@@ -87,11 +97,7 @@ class _AppShellState extends State<AppShell> {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
         }
-        final result = snapshot.data!;
-        return Scaffold(
-            body: HomeScreen(
-                articles: result.articles,
-                skippedCount: result.skipped));
+        return Scaffold(body: HomeScreen(articles: snapshot.data!));
       },
     );
   }
