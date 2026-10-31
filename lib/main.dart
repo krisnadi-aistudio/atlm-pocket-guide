@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'models.dart';
 import 'widgets.dart';
 import 'home.dart';
+import 'theme_controller.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ThemeController.load();
   runApp(const AtlmApp());
 }
 
@@ -12,7 +15,9 @@ class AtlmApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.mode,
+      builder: (_, mode, __) => MaterialApp(
       title: 'Buku Saku ATLM',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -48,8 +53,9 @@ class AtlmApp extends StatelessWidget {
         scaffoldBackgroundColor: kBackgroundDark,
         useMaterial3: true,
       ),
-      themeMode: ThemeMode.system,
+      themeMode: mode,
       home: const AppShell(),
+      ),
     );
   }
 }
