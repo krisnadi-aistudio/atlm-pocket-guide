@@ -35,6 +35,15 @@ const _subOrder = <String>[
   'Golongan Darah',
 ];
 
+/// Grup sub-kelompok: nama + daftar artikelnya. Artikel dibawa langsung
+/// (bukan dicari ulang dari nama), jadi tidak ada sentinel string yang
+/// bisa bentrok dengan sub bernama sama.
+class _SubGroup {
+  final String name;
+  final List<Article> articles;
+  const _SubGroup(this.name, this.articles);
+}
+
 class _CategoryScreenState extends State<CategoryScreen> {
   String _query = '';
   final _controller = TextEditingController();
@@ -50,30 +59,38 @@ class _CategoryScreenState extends State<CategoryScreen> {
     // Mode sub-kelompok: artikel punya field sub dan pengguna belum
     // memilih sub -> tampilkan daftar sub terlebih dahulu.
     if (widget.sub == null) {
-      final subs = <String>[];
+      final bySub = <String, List<Article>>{};
+      final ungrouped = <Article>[];
       for (final a in widget.articles) {
         final s = a.sub;
-        if (s != null && s.isNotEmpty && !subs.contains(s)) subs.add(s);
+        if (s != null && s.isNotEmpty) {
+          (bySub[s] ??= []).add(a);
+        } else {
+          ungrouped.add(a);
+        }
       }
-      if (subs.isNotEmpty) {
-        subs.sort((x, y) {
-          final ix = _subOrder.indexOf(x);
-          final iy = _subOrder.indexOf(y);
+      if (bySub.isNotEmpty) {
+        final groups =
+            bySub.entries.map((e) => _SubGroup(e.key, e.value)).toList();
+        groups.sort((x, y) {
+          final ix = _subOrder.indexOf(x.name);
+          final iy = _subOrder.indexOf(y.name);
           if (ix >= 0 && iy >= 0) return ix.compareTo(iy);
           if (ix >= 0) return -1;
           if (iy >= 0) return 1;
-          return x.compareTo(y);
+          return x.name.compareTo(y.name);
         });
-        return _buildSubList(context, subs);
+        // Artikel tanpa sub ditampung di grup 'Lainnya' paling bawah
+        // supaya tetap bisa dibuka (bukan hilang diam-diam).
+        if (ungrouped.isNotEmpty) {
+          groups.add(_SubGroup('Lainnya', ungrouped));
+        }
+        return _buildSubList(context, groups);
       }
     }
     final visible = _query.isEmpty
         ? widget.articles
-        : widget.articles
-            .where((a) =>
-                a.title.toLowerCase().contains(_query.toLowerCase()) ||
-                a.body.toLowerCase().contains(_query.toLowerCase()))
-            .toList();
+        : searchArticles(widget.articles, _query);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -90,7 +107,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
+            Semantics(
+              label: 'Cari di kategori ini',
+              textField: true,
+              child: TextField(
               controller: _controller,
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
@@ -100,6 +120,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
+                        tooltip: 'Hapus pencarian',
                         onPressed: () {
                           _controller.clear();
                           setState(() => _query = '');
@@ -119,6 +140,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       color: Theme.of(context).colorScheme.primary,
                       width: 1.5),
                 ),
+              ),
               ),
             ),
             const SizedBox(height: 8),
@@ -165,13 +187,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   /// Daftar sub-kelompok: satu kartu per sub berisi nama + jumlah artikel.
-  /// Ketuk untuk membuka daftar artikel sub tersebut.
-  Widget _buildSubList(BuildContext context, List<String> subs) {
-    final counts = <String, int>{};
-    for (final a in widget.articles) {
-      final s = a.sub;
-      if (s != null && s.isNotEmpty) counts[s] = (counts[s] ?? 0) + 1;
-    }
+  /// Ketuk untuk membuka daftar artikel sub tersebut. Grup semu
+  /// Grup 'Lainnya' menampung artikel tanpa sub.
+  Widget _buildSubList(BuildContext context, List<_SubGroup> groups) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.category,
@@ -186,18 +204,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${subs.length} kelompok • ${widget.articles.length} artikel',
+            Text('${groups.length} kelompok • ${widget.articles.length} artikel',
                 style: TextStyle(
                     fontSize: 13,
                     color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(height: 12),
             Expanded(
               child: ListView.separated(
-                itemCount: subs.length,
+                itemCount: groups.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, i) {
-                  final s = subs[i];
-                  final n = counts[s] ?? 0;
+                  final g = groups[i];
+                  final n = g.articles.length;
                   return Card(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -213,10 +231,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           MaterialPageRoute(
                               builder: (_) => CategoryScreen(
                                   category: widget.category,
-                                  sub: s,
-                                  articles: widget.articles
-                                      .where((a) => a.sub == s)
-                                      .toList()))),
+                                  sub: g.name,
+                                  articles: g.articles))),
                       borderRadius: BorderRadius.circular(16),
                       child: Padding(
                         padding:
@@ -228,7 +244,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                 crossAxisAlignment:
                                     CrossAxisAlignment.start,
                                 children: [
-                                  Text(s,
+                                  Text(g.name,
                                       style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold)),
