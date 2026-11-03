@@ -18,7 +18,7 @@ const kCriticalContainer = Color(0xFFFDECEA);
 const kCriticalBorder = Color(0xFFE57373);
 
 // Palet gelap (tema gelap mengikuti sistem; nilai tema terang di atas
-// tidak berubah). Latar gelap #0E1415 mengikuti dokumen review desain.
+// tidak berubah).
 const kBackgroundDark = Color(0xFF0E1415);
 const kSurfaceDark = Color(0xFF1C2526);
 const kSurfaceVariantDark = Color(0xFF243235);
@@ -131,12 +131,14 @@ class SectionHeader extends StatelessWidget {
 class InfoRow extends StatelessWidget {
   final IconData? icon;
   final Widget? iconChild;
+  final Color? iconBackground;
   final String title;
   final String description;
   final VoidCallback? onTap;
   const InfoRow(
       {this.icon,
       this.iconChild,
+      this.iconBackground,
       required this.title,
       required this.description,
       this.onTap,
@@ -162,7 +164,8 @@ class InfoRow extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
+                  color: iconBackground ??
+                      Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: iconChild ??
@@ -283,7 +286,8 @@ class CategoryCard extends StatelessWidget {
     final style = categoryStyle(category);
     if (mode == 1) {
       return InfoRow(
-          iconChild: categoryIcon(category, 24, kPrimary),
+          iconChild: categoryIcon(category, 24, style.color),
+          iconBackground: style.color.withValues(alpha: 0.16),
           title: category,
           description: '',
           onTap: onTap);
