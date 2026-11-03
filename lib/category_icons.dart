@@ -48,7 +48,10 @@ Widget categoryIcon(String category, double size, Color color) {
     default:
       icon = Icon(Icons.info, color: color, size: size);
   }
-  return Semantics(label: category, child: icon);
+  // Ikon dekoratif: nama kategori sudah dibaca dari teks kartu di
+  // sebelahnya, jadi ikon dikecualikan agar screen reader tidak
+  // mengumumkan ganda.
+  return ExcludeSemantics(child: icon);
 }
 
 class _CustomIcon extends StatelessWidget {
