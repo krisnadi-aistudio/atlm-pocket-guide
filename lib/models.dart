@@ -443,13 +443,18 @@ class InterpretationTable {
 }
 
 InterpretationTable? parseInterpretationRows(String text) {
-  final pattern = RegExp(r'(?:^|\.\s+)([^.:;]{1,30}):\s+');
+  // Separator: awal teks, titik+spasi, ATAU newline (beberapa artikel
+  // memakai newline sebagai pemisah baris klasifikasi).
+  final pattern = RegExp(r'(?:^|(?:\.|\n)\s*)([^.:;\n]{1,30}):\s+');
   final matches = pattern.allMatches(text).toList();
   if (matches.length < 2) return null;
   // Prefix: teks sebelum baris tabel pertama (boleh kosong).
-  // Jika match diawali ".\s+", sertakan titiknya di prefix.
+  // Jika match diawali ".\s+" atau "\n", sertakan pemisahnya di prefix.
   var prefixEnd = matches.first.start;
-  if (prefixEnd > 0 && text[prefixEnd] == '.') prefixEnd += 1;
+  if (prefixEnd > 0) {
+    final c = text[prefixEnd];
+    if (c == '.' || c == '\n') prefixEnd += 1;
+  }
   final prefix = text.substring(0, prefixEnd).trim();
   // Validasi: prefix tidak boleh mengandung pola "Label:" yang terlewat
   // (artinya tabel tidak berurutan).

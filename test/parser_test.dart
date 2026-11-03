@@ -180,6 +180,16 @@ void main() {
     expect(table.rows[0].result, 'Negatif');
   });
 
+  test('interpretasi pemisah newline jadi tabel', () {
+    final table = parseInterpretationRows(
+        'Glukosa Darah Puasa: Normal 70-99.\n'
+        'Glukosa Darah 2 Jam PP: Normal <140.\n'
+        'Glukosa Darah Sewaktu: Normal <140.');
+    expect(table, isNotNull);
+    expect(table!.rows.length, 3);
+    expect(table.rows[1].result, 'Glukosa Darah 2 Jam PP');
+  });
+
   test('peta rumus bergambar: kunci valid dan file ada', () {
     final raw = File('assets/articles.json').readAsStringSync();
     final ids = {
