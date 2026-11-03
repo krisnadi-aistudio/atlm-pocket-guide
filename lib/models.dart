@@ -352,6 +352,9 @@ const formulaDisplays = <String, FormulaDisplay>{
     'assets/formulas/hematologi-rumus-retikulosit-1.png',
     'assets/formulas/hematologi-rumus-retikulosit-2.png',
   ], note: 'Jumlah total eritrosit terhitung minimal 1.000 sel.'),
+  'hematologi-hitung-jenis-leukosit': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-hitung-jenis-leukosit.png',
+  ], note: 'Total persentase wajib tepat 100%.'),
   'hematologi-nilai-absolut-nlr': FormulaDisplay(assets: [
     'assets/formulas/hematologi-nilai-absolut-nlr.png',
   ], note: 'Satuan: sel/µL.'),

@@ -1,24 +1,10 @@
 [
   {
-    "id": "kimia-klinik-glukosa-darah-puasa",
-    "title": "Glukosa Darah Puasa",
+    "id": "kimia-klinik-glukosa-darah",
+    "title": "Glukosa Darah",
     "category": "KIMIA KLINIK",
-    "body": "Prinsip: Glukosa enzimatik kuantitatif dengan metode GOD-PAP atau Heksokinase (heksokinase + G6PD membentuk NADPH, dibaca 340 nm).\n\nSampel: Serum atau plasma Na-F/Kalium Oksalat. Puasa makan 8–10 jam. Tolak serum yang tidak dipisahkan dari sel >1 jam bila tanpa Na-F.\n\nInterpretasi: Normal 70–99 mg/dL; prediabetes 100–125 mg/dL; diabetes ≥126 mg/dL (konfirmasi ulang hari lain).\n\nTitik kritis: Pisahkan serum maksimal 30–60 menit pascapengambilan (glikolisis menurunkan glukosa sekitar 5–7%/jam) - Hindari hemolisis (enzim eritrosit mengganggu pembacaan).",
-    "reference": "American Diabetes Association (ADA). Standards of Care in Diabetes—2026; https://diabetesjournals.org/care"
-  },
-  {
-    "id": "kimia-klinik-glukosa-darah-2-jam-pp",
-    "title": "Glukosa Darah 2 Jam PP",
-    "category": "KIMIA KLINIK",
-    "body": "Prinsip: Glukosa enzimatik (heksokinase/glukosa oksidase) tepat 2 jam setelah makan (beban karbohidrat standar). Uji toleransi glukosa oral (75 g glukosa anhidrat) mengikuti protokol TTGO tersendiri.\n\nSampel: Serum/plasma Na-F tepat 2 jam dari suapan pertama. Tolak sampel yang dibekukan, hemolisis berat, atau waktu pengambilan melenceng.\n\nInterpretasi: Normal <140 mg/dL; TGT 140–199 mg/dL; diabetes ≥200 mg/dL.\n\nTitik kritis: Catat waktu akurat; pasien tidak makan, merokok, atau aktivitas berat selama 2 jam - Segera sentrifus tabung tanpa Na-F untuk cegah glikolisis.",
-    "reference": "World Health Organization. Definition and diagnosis of diabetes mellitus and intermediate hyperglycaemia; https://www.who.int/publications/i/item/9241594934"
-  },
-  {
-    "id": "kimia-klinik-glukosa-darah-sewaktu",
-    "title": "Glukosa Darah Sewaktu",
-    "category": "KIMIA KLINIK",
-    "body": "Prinsip: Glukosa kapan saja tanpa puasa; metode enzimatik fotometri (heksokinase/GOD-PAP) di analyzer atau biosensor elektrokimia (POCT).\n\nSampel: Serum, plasma heparin/Na-F, atau darah kapiler (POCT). Tolak antikoagulan tidak sesuai atau darah simpan tanpa pemisahan sel.\n\nInterpretasi: Normal: <140 mg/dL. 140–199 mg/dL: belum dapat disimpulkan — anjurkan konfirmasi (GDP/GD2JPP/HbA1c). ≥200 mg/dL + gejala klasik (poliuria, polidipsia, polifagia, berat badan turun) = diabetes.\n\nTitik kritis: POCT: cek kedaluwarsa strip, kode kalibrator, tetesan darah menutupi zona elektroda penuh - Jangan memeras ujung jari berlebihan (cairan interstisial mengencerkan sampel).",
-    "reference": "American Diabetes Association (ADA). Classification and Diagnosis of Diabetes: Standards of Care in Diabetes; https://diabetesjournals.org/care"
+    "body": "Prinsip: Glukosa enzimatik kuantitatif dengan metode GOD-PAP atau Heksokinase (heksokinase + G6PD membentuk NADPH, dibaca 340 nm). Pada POCT memakai biosensor elektrokimia.\n\nSampel: Serum atau plasma Na-F/Kalium Oksalat; darah kapiler untuk POCT. Glukosa Darah Puasa: puasa makan 8–10 jam. Glukosa Darah 2 Jam PP: tepat 2 jam dari suapan pertama. Glukosa Darah Sewaktu: kapan saja tanpa puasa. Tolak serum yang tidak dipisahkan dari sel >1 jam bila tanpa Na-F, sampel beku, hemolisis berat, atau waktu pengambilan melenceng.\n\nInterpretasi:\nGlukosa Darah Puasa: Normal 70–99 mg/dL; prediabetes 100–125 mg/dL; diabetes ≥126 mg/dL (konfirmasi ulang hari lain).\nGlukosa Darah 2 Jam PP: Normal <140 mg/dL; TGT 140–199 mg/dL; diabetes ≥200 mg/dL.\nGlukosa Darah Sewaktu: Normal <140 mg/dL; 140–199 mg/dL belum dapat disimpulkan — konfirmasi (Glukosa Darah Puasa/Glukosa Darah 2 Jam PP/HbA1c); ≥200 mg/dL + gejala klasik (poliuria, polidipsia, polifagia, berat badan turun) = diabetes.\n\nTitik kritis: Pisahkan serum maksimal 30–60 menit pascapengambilan (glikolisis menurunkan glukosa sekitar 5–7%/jam) - Hindari hemolisis (enzim eritrosit mengganggu pembacaan) - Catat waktu akurat untuk Glukosa Darah 2 Jam PP; pasien tidak makan, merokok, atau aktivitas berat selama 2 jam - POCT: cek kedaluwarsa strip, kode kalibrator, tetesan darah menutupi zona elektroda penuh; jangan memeras ujung jari berlebihan (cairan interstisial mengencerkan sampel).",
+    "reference": "American Diabetes Association (ADA). Standards of Care in Diabetes—2026; https://diabetesjournals.org/care; World Health Organization. Definition and diagnosis of diabetes mellitus and intermediate hyperglycaemia; https://www.who.int/publications/i/item/9241594934; American Diabetes Association (ADA). Classification and Diagnosis of Diabetes: Standards of Care in Diabetes"
   },
   {
     "id": "kimia-klinik-hba1c",

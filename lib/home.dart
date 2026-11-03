@@ -20,6 +20,21 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+/// Sapaan berdasar jam perangkat: pagi 04-10, siang 11-14,
+/// sore 15-18, malam 19-03.
+String _salamWaktu() {
+  final jam = DateTime.now().hour;
+  if (jam >= 4 && jam < 11) {
+    return 'Selamat pagi kak, selamat beraktifitas.';
+  } else if (jam >= 11 && jam < 15) {
+    return 'Selamat siang kak, tetap semangat.';
+  } else if (jam >= 15 && jam < 19) {
+    return 'Selamat sore kak, semoga hari mu menyenangkan.';
+  } else {
+    return 'Selamat malam kak, selamat beristirahat.';
+  }
+}
+
 class _HomeScreenState extends State<HomeScreen> {
   String _query = '';
   int _gridMode = 2;
@@ -76,11 +91,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Urutan kategori = urutan kemunculan pertama di JSON (stabil).
+    // Urutan kategori = alfabetis A-Z.
     final categories = <String>[];
     for (final a in widget.articles) {
       if (!categories.contains(a.category)) categories.add(a.category);
     }
+    categories.sort();
     final results = _query.isEmpty
         ? const <Article>[]
         : searchArticles(widget.articles, _query);
@@ -114,12 +130,20 @@ class _HomeScreenState extends State<HomeScreen> {
               // Tombol mode gelap di samping Pengaturan.
               // Tooltip dinamis: menyebut aksi yang akan terjadi.
               IconButton(
-                icon: Icon(
-                  Theme.of(context).brightness == Brightness.dark
-                      ? Icons.light_mode
-                      : Icons.brightness_2,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                // brightness_2 dicerminkan horizontal agar sabit tidak "kebalik".
+                icon: Theme.of(context).brightness == Brightness.dark
+                    ? Icon(
+                        Icons.light_mode,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                    : Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.rotationY(3.141592653589793),
+                        child: Icon(
+                          Icons.brightness_2,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
                 tooltip: Theme.of(context).brightness == Brightness.dark
                     ? 'Aktifkan mode terang'
                     : 'Aktifkan mode gelap',
@@ -159,9 +183,9 @@ class _HomeScreenState extends State<HomeScreen> {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 const SizedBox(height: 16),
-                const Text('Mau cari apa hari ini?',
+                Text(_salamWaktu(),
                     style:
-                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                        const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 // Label permanen untuk screen reader (hintText hilang
                 // setelah pengguna mengetik).
@@ -172,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller: _searchController,
                   onChanged: (v) => setState(() => _query = v),
                   decoration: InputDecoration(
-                    hintText: 'Cari istilah, pemeriksaan, atau spesimen…',
+                    hintText: 'Mau cari apa kak?!',
                     hintStyle: const TextStyle(fontSize: 14),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(

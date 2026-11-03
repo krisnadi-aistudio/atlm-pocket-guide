@@ -692,3 +692,213 @@ Path stoolCup() {
   path.close();
   return path;
 }
+
+/// Ikon sub-kelompok Hematologi — gambar tangan, gaya selaras ikon kategori.
+/// Dipakai di kartu sub-grup (layar kategori). Sistem koordinat 100x100.
+Widget subGroupIcon(String sub, double size, Color color) {
+  final CustomPainter painter;
+  switch (sub) {
+    case 'Trombosit':
+      painter = _PlateletPainter(color);
+      break;
+    case 'Eritrosit':
+      painter = _RbcPainter(color);
+      break;
+    case 'Leukosit':
+      painter = _WbcPainter(color);
+      break;
+    case 'Hemoglobin':
+      painter = _HbPainter(color);
+      break;
+    case 'Gambaran Darah Tepi':
+      painter = _SlidePainter(color);
+      break;
+    case 'LED':
+      painter = _EsrPainter(color);
+      break;
+    case 'Hemostasis':
+      painter = _FibrinPainter(color);
+      break;
+    case 'Golongan Darah':
+      painter = _BloodBagPainter(color);
+      break;
+    default:
+      return ExcludeSemantics(
+          child: Icon(Icons.label_outline, color: color, size: size));
+  }
+  return ExcludeSemantics(
+      child: _CustomIcon(size, painter));
+}
+
+/// Trombosit: 3 keping kecil tak beraturan.
+class _PlateletPainter extends CustomPainter {
+  final Color color;
+  _PlateletPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 100;
+    canvas.scale(s, s);
+    final dot = _fill(color);
+    canvas.drawCircle(const Offset(35, 38), 11, dot);
+    canvas.drawCircle(const Offset(62, 32), 13, dot);
+    canvas.drawCircle(const Offset(50, 66), 10, dot);
+  }
+  @override
+  bool shouldRepaint(_PlateletPainter old) => old.color != color;
+}
+
+/// Eritrosit: cakram bikonkaf — cincin luar + titik pucat tengah.
+class _RbcPainter extends CustomPainter {
+  final Color color;
+  _RbcPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 100;
+    canvas.scale(s, s);
+    canvas.drawCircle(const Offset(50, 50), 30, _stroke(color, 9));
+    canvas.drawCircle(const Offset(50, 50), 8, _fill(color));
+  }
+  @override
+  bool shouldRepaint(_RbcPainter old) => old.color != color;
+}
+
+/// Leukosit: sel besar + inti bergerombol tiga (neutrofil).
+class _WbcPainter extends CustomPainter {
+  final Color color;
+  _WbcPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 100;
+    canvas.scale(s, s);
+    canvas.drawCircle(const Offset(50, 50), 32, _stroke(color, 7));
+    final nuc = _fill(color);
+    canvas.drawCircle(const Offset(40, 44), 10, nuc);
+    canvas.drawCircle(const Offset(58, 42), 11, nuc);
+    canvas.drawCircle(const Offset(50, 60), 10, nuc);
+  }
+  @override
+  bool shouldRepaint(_WbcPainter old) => old.color != color;
+}
+
+/// Hemoglobin: 4 subunit globin (2x2).
+class _HbPainter extends CustomPainter {
+  final Color color;
+  _HbPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 100;
+    canvas.scale(s, s);
+    final u = _fill(color);
+    canvas.drawCircle(const Offset(36, 36), 14, u);
+    canvas.drawCircle(const Offset(64, 36), 14, u);
+    canvas.drawCircle(const Offset(36, 64), 14, u);
+    canvas.drawCircle(const Offset(64, 64), 14, u);
+  }
+  @override
+  bool shouldRepaint(_HbPainter old) => old.color != color;
+}
+
+/// Gambaran darah tepi: kaca objek + apusan darah bergelombang.
+class _SlidePainter extends CustomPainter {
+  final Color color;
+  _SlidePainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 100;
+    canvas.scale(s, s);
+    final rect = RRect.fromLTRBR(18, 32, 82, 68, const Radius.circular(4));
+    canvas.drawRRect(rect, _stroke(color, 6));
+    final smear = Path()
+      ..moveTo(28, 50)
+      ..quadraticBezierTo(40, 42, 52, 50)
+      ..quadraticBezierTo(64, 58, 74, 48);
+    canvas.drawPath(smear, _stroke(color, 6));
+    canvas.drawCircle(const Offset(34, 58), 3.5, _fill(color));
+    canvas.drawCircle(const Offset(62, 56), 3.5, _fill(color));
+  }
+  @override
+  bool shouldRepaint(_SlidePainter old) => old.color != color;
+}
+
+/// LED: tabung sedimentasi tinggi + batas plasma/sel + skala.
+class _EsrPainter extends CustomPainter {
+  final Color color;
+  _EsrPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 100;
+    canvas.scale(s, s);
+    final tube = Path()
+      ..moveTo(42, 8)
+      ..lineTo(42, 82)
+      ..quadraticBezierTo(42, 92, 50, 92)
+      ..quadraticBezierTo(58, 92, 58, 82)
+      ..lineTo(58, 8);
+    canvas.drawPath(tube, _stroke(color, 6));
+    // Endapan sel di bawah, plasma di atas.
+    final cells = Path()
+      ..moveTo(45, 62)
+      ..lineTo(45, 82)
+      ..quadraticBezierTo(45, 89, 50, 89)
+      ..quadraticBezierTo(55, 89, 55, 82)
+      ..lineTo(55, 62)
+      ..close();
+    canvas.drawPath(cells, _fill(color));
+    // Skala ukur.
+    final tick = _stroke(color, 4);
+    for (var i = 0; i < 3; i++) {
+      final y = 24.0 + i * 12;
+      canvas.drawLine(Offset(58, y), Offset(68, y), tick);
+    }
+  }
+  @override
+  bool shouldRepaint(_EsrPainter old) => old.color != color;
+}
+
+/// Hemostasis: anyaman fibrin menyilang + 2 trombosit.
+class _FibrinPainter extends CustomPainter {
+  final Color color;
+  _FibrinPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 100;
+    canvas.scale(s, s);
+    final f = _stroke(color, 5);
+    canvas.drawLine(const Offset(24, 30), const Offset(76, 66), f);
+    canvas.drawLine(const Offset(76, 30), const Offset(24, 66), f);
+    canvas.drawLine(const Offset(50, 22), const Offset(50, 78), f);
+    final dot = _fill(color);
+    canvas.drawCircle(const Offset(36, 52), 8, dot);
+    canvas.drawCircle(const Offset(64, 46), 8, dot);
+  }
+  @override
+  bool shouldRepaint(_FibrinPainter old) => old.color != color;
+}
+
+/// Golongan darah: kantong darah + selang.
+class _BloodBagPainter extends CustomPainter {
+  final Color color;
+  _BloodBagPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 100;
+    canvas.scale(s, s);
+    // Selang di atas.
+    canvas.drawLine(const Offset(50, 8), const Offset(50, 28), _stroke(color, 7));
+    // Badan kantong.
+    final bag = RRect.fromLTRBR(30, 28, 70, 88, const Radius.circular(10));
+    canvas.drawRRect(bag, _stroke(color, 6));
+    // Isi darah sebagian.
+    final blood = Path()
+      ..moveTo(36, 58)
+      ..lineTo(36, 78)
+      ..quadraticBezierTo(36, 82, 40, 82)
+      ..lineTo(60, 82)
+      ..quadraticBezierTo(64, 82, 64, 78)
+      ..lineTo(64, 58)
+      ..close();
+    canvas.drawPath(blood, _fill(color));
+  }
+  @override
+  bool shouldRepaint(_BloodBagPainter old) => old.color != color;
+}

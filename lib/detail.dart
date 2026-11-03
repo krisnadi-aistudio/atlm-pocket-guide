@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'models.dart';
 import 'widgets.dart';
@@ -782,15 +784,65 @@ class _SumberTab extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text(article.reference.trim().isEmpty
-                      ? 'Belum ditetapkan.'
-                      : article.reference.trim()),
+                  _LinkableText(
+                      text: article.reference.trim().isEmpty
+                          ? 'Belum ditetapkan.'
+                          : article.reference.trim()),
                 ],
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Teks dengan URL yang bisa diketuk (membuka browser eksternal).
+/// Hyperlink-nya sendiri offline; koneksi hanya dibutuhkan saat membuka.
+class _LinkableText extends StatelessWidget {
+  final String text;
+  const _LinkableText({required this.text});
+
+  static final _urlRegex = RegExp(
+      r'(https?://[^\s;),]+|www\.[^\s;),]+)',
+      caseSensitive: false);
+
+  @override
+  Widget build(BuildContext context) {
+    final spans = <TextSpan>[];
+    var pos = 0;
+    final linkColor = Theme.of(context).colorScheme.primary;
+    for (final m in _urlRegex.allMatches(text)) {
+      if (m.start > pos) {
+        spans.add(TextSpan(text: text.substring(pos, m.start)));
+      }
+      var url = m.group(0)!;
+      // Buang titik/koma di ujung yang bukan bagian URL.
+      url = url.replaceAll(RegExp(r'[.,;]+$'), '');
+      final target = url.startsWith('http') ? url : 'https://$url';
+      spans.add(TextSpan(
+        text: url,
+        style: TextStyle(
+            color: linkColor, decoration: TextDecoration.underline),
+        recognizer: TapGestureRecognizer()
+          ..onTap = () async {
+            final uri = Uri.tryParse(target);
+            if (uri != null) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
+      ));
+      pos = m.start + url.length;
+    }
+    if (pos < text.length) {
+      spans.add(TextSpan(text: text.substring(pos)));
+    }
+    return SelectableText.rich(
+      TextSpan(
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface),
+          children: spans),
     );
   }
 }

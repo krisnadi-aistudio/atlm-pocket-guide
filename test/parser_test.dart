@@ -182,8 +182,8 @@ void main() {
         total++;
       }
     }
-    expect(formulaDisplays.length, 10);
-    expect(total, 14);
+    expect(formulaDisplays.length, 11);
+    expect(total, 15);
   });
 
   group('searchArticles', () {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'models.dart';
 import 'widgets.dart';
 import 'detail.dart';
+import 'category_icons.dart';
 
 /// Layar kategori sendiri: cari dalam kategori + daftar artikelnya
 /// saja. Kembali mengantar ke Beranda.
@@ -186,7 +187,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
-  /// Daftar sub-kelompok: satu kartu per sub berisi nama + jumlah artikel.
+  /// Daftar sub-kelompok: satu kartu per sub berisi ikon + nama.
   /// Ketuk untuk membuka daftar artikel sub tersebut. Grup semu
   /// Grup 'Lainnya' menampung artikel tanpa sub.
   Widget _buildSubList(BuildContext context, List<_SubGroup> groups) {
@@ -204,18 +205,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${groups.length} kelompok • ${widget.articles.length} artikel',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 12),
             Expanded(
               child: ListView.separated(
                 itemCount: groups.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, i) {
                   final g = groups[i];
-                  final n = g.articles.length;
                   return Card(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -239,24 +234,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             const EdgeInsets.fromLTRB(16, 16, 12, 16),
                         child: Row(
                           children: [
+                            // Ikon sub-grup (warna ikut kategori induk).
+                            subGroupIcon(
+                                g.name,
+                                40,
+                                categoryStyle(widget.category).color),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(g.name,
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 4),
-                                  Text('$n artikel',
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant)),
-                                ],
-                              ),
+                              child: Text(g.name,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
                             ),
                             Icon(Icons.chevron_right,
                                 color: Theme.of(context)

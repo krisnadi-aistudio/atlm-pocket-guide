@@ -91,7 +91,8 @@ void main() {
       await t.pumpWidget(wrap(HomeScreen(articles: [_fxA, _fxB])));
       await t.pump();
       expect(find.text('HEMATOLOGI'), findsOneWidget);
-      expect(find.text('Mau cari apa hari ini?'), findsOneWidget);
+      // Sapaan dinamis berdasar jam perangkat.
+      expect(find.textContaining('Selamat'), findsOneWidget);
     });
 
     testWidgets('pencarian memfilter lalu kembali ke grid', (t) async {
