@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'models.dart';
 import 'widgets.dart';
 import 'home.dart';
+import 'splash.dart';
 import 'theme_controller.dart';
 
 void main() async {
@@ -18,7 +19,7 @@ class AtlmApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.mode,
       builder: (_, mode, __) => MaterialApp(
-      title: 'Buku Saku ATLM',
+      title: 'SakuATLM',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
@@ -71,12 +72,24 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  Future<List<Article>> _articlesFuture = loadArticles();
+  late Future<List<Article>> _initFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFuture = _load();
+  }
+
+  /// Muat artikel + jeda minimum splash (1,4 dtk) agar branding sempat terlihat.
+  Future<List<Article>> _load() => Future.wait([
+        loadArticles(),
+        Future.delayed(const Duration(milliseconds: 1400)),
+      ]).then((v) => v[0] as List<Article>);
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Article>>(
-      future: _articlesFuture,
+      future: _initFuture,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Scaffold(
@@ -90,7 +103,7 @@ class _AppShellState extends State<AppShell> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => setState(() {
-                      _articlesFuture = loadArticles();
+                      _initFuture = _load();
                     }),
                     child: const Text('Coba lagi'),
                   ),
@@ -100,8 +113,7 @@ class _AppShellState extends State<AppShell> {
           );
         }
         if (!snapshot.hasData) {
-          return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+          return const SplashScreen();
         }
         return Scaffold(body: HomeScreen(articles: snapshot.data!));
       },
