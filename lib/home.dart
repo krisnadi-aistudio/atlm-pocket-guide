@@ -31,7 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     SharedPreferences.getInstance().then((prefs) {
       final saved = prefs.getInt(_gridModeKey);
-      if (saved != null && mounted) setState(() => _gridMode = saved);
+      // Terima hanya 1/2/3; nilai lama/rusak diabaikan (pakai default 2).
+      if ((saved == 1 || saved == 2 || saved == 3) && mounted) {
+        setState(() => _gridMode = saved!);
+      }
     });
     PackageInfo.fromPlatform().then((info) {
       if (mounted) {
@@ -97,23 +100,29 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const LabLogo(32),
                 const SizedBox(width: 10),
-                Text('SakuATLM',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary)),
+                Expanded(
+                  child: Text('SakuATLM',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary)),
+                ),
               ],
             ),
             actions: [
               // Tombol mode gelap di samping Pengaturan.
+              // Tooltip dinamis: menyebut aksi yang akan terjadi.
               IconButton(
                 icon: Icon(
                   Theme.of(context).brightness == Brightness.dark
                       ? Icons.light_mode
-                      : Icons.dark_mode,
+                      : Icons.brightness_2,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                tooltip: 'Mode gelap',
+                tooltip: Theme.of(context).brightness == Brightness.dark
+                    ? 'Aktifkan mode terang'
+                    : 'Aktifkan mode gelap',
                 onPressed: () => ThemeController.toggle(context),
               ),
               // Pengaturan (titik 3).
@@ -154,7 +163,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     style:
                         TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                TextField(
+                // Label permanen untuk screen reader (hintText hilang
+                // setelah pengguna mengetik).
+                Semantics(
+                  label: 'Cari artikel',
+                  textField: true,
+                  child: TextField(
                   controller: _searchController,
                   onChanged: (v) => setState(() => _query = v),
                   decoration: InputDecoration(
@@ -168,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     suffixIcon: _query.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
+                            tooltip: 'Hapus pencarian',
                             onPressed: () {
                               _searchController.clear();
                               setState(() => _query = '');
@@ -185,6 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderSide:
                           BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
                     ),
+                  ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -218,10 +234,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Theme.of(context).colorScheme.primary),
                       tooltip: 'Ubah tampilan grid',
                       onSelected: _setGridMode,
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 2, child: Text('2 Kolom')),
-                        PopupMenuItem(value: 3, child: Text('3 Kolom')),
-                        PopupMenuItem(value: 1, child: Text('Daftar')),
+                      // Mode aktif ditandai (terbaca screen reader).
+                      itemBuilder: (_) => [
+                        CheckedPopupMenuItem(
+                            value: 2,
+                            checked: _gridMode == 2,
+                            child: const Text('2 Kolom')),
+                        CheckedPopupMenuItem(
+                            value: 3,
+                            checked: _gridMode == 3,
+                            child: const Text('3 Kolom')),
+                        CheckedPopupMenuItem(
+                            value: 1,
+                            checked: _gridMode == 1,
+                            child: const Text('Daftar')),
                       ],
                     ),
                   ),
@@ -292,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   Center(
-                    child: Text('Buku Saku ATLM • $_versionText',
+                    child: Text('SakuATLM • $_versionText',
                         style: TextStyle(
                             fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ),
