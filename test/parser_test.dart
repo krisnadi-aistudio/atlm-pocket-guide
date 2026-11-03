@@ -148,13 +148,14 @@ void main() {
   });
 
   test('interpretasi berpasangan jadi baris kolom', () {
-    final rows = parseInterpretationRows(
+    final table = parseInterpretationRows(
         'Negatif: Garis C dan T muncul. Positif: Hanya garis C muncul. '
         'Tidak Valid: Garis C tidak muncul.');
-    expect(rows!.length, 3);
-    expect(rows[0].result, 'Negatif');
-    expect(rows[0].explanation, 'Garis C dan T muncul');
-    expect(rows[2].result, 'Tidak Valid');
+    expect(table!.rows.length, 3);
+    expect(table.rows[0].result, 'Negatif');
+    expect(table.rows[0].explanation, 'Garis C dan T muncul');
+    expect(table.rows[2].result, 'Tidak Valid');
+    expect(table.prefix, isEmpty);
   });
 
   test('interpretasi prosa dan campuran tetap prosa', () {
@@ -167,6 +168,16 @@ void main() {
             'BTA positif bila terlihat basil. Skala: Negatif = 0 AFB; '
             '1+ = 10-99 AFB.'),
         isNull);
+  });
+
+  test('interpretasi dengan prefix: prefix terpisah, tabel tetap jadi', () {
+    final table = parseInterpretationRows(
+        'Positif = basil merah tahan asam. Skala IUATLD/WHO. '
+        'Negatif: 0 AFB. Scanty: 1-9 AFB. 1+: 10-99 AFB.');
+    expect(table, isNotNull);
+    expect(table!.prefix, 'Positif = basil merah tahan asam. Skala IUATLD/WHO.');
+    expect(table.rows.length, 3);
+    expect(table.rows[0].result, 'Negatif');
   });
 
   test('peta rumus bergambar: kunci valid dan file ada', () {
@@ -182,8 +193,8 @@ void main() {
         total++;
       }
     }
-    expect(formulaDisplays.length, 11);
-    expect(total, 15);
+    expect(formulaDisplays.length, 24);
+    expect(total, 32);
   });
 
   group('searchArticles', () {

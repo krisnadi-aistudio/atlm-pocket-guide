@@ -355,6 +355,49 @@ const formulaDisplays = <String, FormulaDisplay>{
   'hematologi-hitung-jenis-leukosit': FormulaDisplay(assets: [
     'assets/formulas/hematologi-hitung-jenis-leukosit.png',
   ], note: 'Total persentase wajib tepat 100%.'),
+  'hematologi-estimasi-barbara-brown': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-estimasi-trombosit-bb.png',
+    'assets/formulas/hematologi-estimasi-leukosit-bb.png',
+  ]),
+  'hematologi-retikulosit-supravital': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-retikulosit-supravital.png',
+  ]),
+  'hematologi-konfirmasi-clumping-trombosit': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-koreksi-clumping.png',
+  ]),
+  'hematologi-hitung-leukosit-manual': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-hitung-leukosit-dasar.png',
+    'assets/formulas/hematologi-hitung-leukosit-cepat.png',
+  ]),
+  'hematologi-hitung-trombosit-manual': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-hitung-trombosit-cepat.png',
+  ]),
+  'hematologi-hitung-eritrosit-manual': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-hitung-eritrosit-cepat.png',
+  ]),
+  'hematologi-hitung-eosinofil-manual': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-hitung-eosinofil-cepat.png',
+  ]),
+  'hematologi-mikrohematokrit': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-mikrohematokrit.png',
+  ]),
+  'hematologi-koreksi-nrbc': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-koreksi-nrbc.png',
+  ]),
+  'hematologi-koreksi-sitrat': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-koreksi-sitrat-trombosit.png',
+    'assets/formulas/hematologi-koreksi-sitrat-volume.png',
+  ]),
+  'hematologi-rumple-leede': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-rumple-leede.png',
+  ]),
+  'hematologi-hb-sianmethemoglobin': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-hb-sianmet-1.png',
+    'assets/formulas/hematologi-hb-sianmet-2.png',
+  ]),
+  'rujukan-analisa-cairan-pleura': FormulaDisplay(assets: [
+    'assets/formulas/rujukan-kriteria-light.png',
+  ]),
   'hematologi-nilai-absolut-nlr': FormulaDisplay(assets: [
     'assets/formulas/hematologi-nilai-absolut-nlr.png',
   ], note: 'Satuan: sel/µL.'),
@@ -391,11 +434,25 @@ const formulaDisplays = <String, FormulaDisplay>{
 /// karakter, tanpa '.' ';' ':'); selain itu null (tetap prosa).
 /// Contoh yang lolos: tes narkoba (Negatif/Positif/Tidak Valid),
 /// gas darah (Tafsir dibaca berurutan/Nilai acuan klasik).
-List<InterpretationRow>? parseInterpretationRows(String text) {
+/// Hasil parse tabel interpretasi: prefix (teks pengantar sebelum tabel,
+/// bisa kosong) + baris-baris tabel.
+class InterpretationTable {
+  final String prefix;
+  final List<InterpretationRow> rows;
+  const InterpretationTable({required this.prefix, required this.rows});
+}
+
+InterpretationTable? parseInterpretationRows(String text) {
   final pattern = RegExp(r'(?:^|\.\s+)([^.:;]{1,30}):\s+');
   final matches = pattern.allMatches(text).toList();
   if (matches.length < 2) return null;
-  if (matches.first.start != 0) return null;
+  // Prefix: teks sebelum baris tabel pertama (boleh kosong).
+  // Jika match diawali ".\s+", sertakan titiknya di prefix.
+  var prefixEnd = matches.first.start;
+  if (prefixEnd > 0 && text[prefixEnd] == '.') prefixEnd += 1;
+  final prefix = text.substring(0, prefixEnd).trim();
+  // Validasi: prefix tidak boleh mengandung pola "Label:" yang terlewat
+  // (artinya tabel tidak berurutan).
   final rows = <InterpretationRow>[];
   for (var i = 0; i < matches.length; i++) {
     final nextStart =
@@ -408,5 +465,5 @@ List<InterpretationRow>? parseInterpretationRows(String text) {
     rows.add(InterpretationRow(
         result: matches[i].group(1)!.trim(), explanation: body));
   }
-  return rows;
+  return InterpretationTable(prefix: prefix, rows: rows);
 }

@@ -476,8 +476,20 @@ class _MateriTabState extends State<_MateriTab>
       }
     }
     if (s.label == 'Interpretasi') {
-      final rows = parseInterpretationRows(s.text);
-      if (rows != null) return _interpretationTable(rows);
+      final table = parseInterpretationRows(s.text);
+      if (table != null) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (table.prefix.isNotEmpty) ...[
+              Text(table.prefix,
+                  style: const TextStyle(fontSize: 16, height: 1.5)),
+              const SizedBox(height: 12),
+            ],
+            _interpretationTable(table.rows),
+          ],
+        );
+      }
     }
     // Blok multiline yang baris pertamanya berlabel: render baris-barisnya
     // seperti multiline agar bullet/langkah tidak hilang.
