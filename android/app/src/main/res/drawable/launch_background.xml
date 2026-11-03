@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Latar splash native: biru brand, selaras dengan SplashScreen Flutter -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="#FF0B63E5" />
+    <item>
+        <color android:color="#FF0B63E5" />
+    </item>
 </layer-list>
