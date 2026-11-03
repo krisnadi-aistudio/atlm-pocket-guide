@@ -58,14 +58,36 @@ Future<List<Article>> loadArticles() async {
       .toList();
 }
 
+/// Sinonim istilah awam -> istilah artikel (kurasi manual, kecil).
+/// Dipakai memperluas query: artikel cocok bila query ATAU sinonimnya
+/// cocok. Daftar sengaja pendek & tak-ambigu; sinonim salah = hasil
+/// salah, jadi jangan ditambah tanpa verifikasi (3 Nov 2026).
+const _searchSynonyms = <String, List<String>>{
+  'gula darah': ['glukosa'],
+  'kencing': ['urin'],
+  'air kencing': ['urin'],
+};
+
+/// Normalisasi query: huruf kecil, spasi dirapikan.
+String _normalizeQuery(String s) =>
+    s.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+
 List<Article> searchArticles(List<Article> all, String query) {
-  final q = query.trim().toLowerCase();
+  final q = _normalizeQuery(query);
   if (q.isEmpty) return const [];
-  return all
-      .where((a) =>
-          a.title.toLowerCase().contains(q) ||
-          a.body.toLowerCase().contains(q))
-      .toList();
+  // Kembangkan dengan sinonim yang kuncinya muncul di query.
+  final terms = <String>[q];
+  _searchSynonyms.forEach((key, values) {
+    if (q.contains(key)) terms.addAll(values);
+  });
+  return all.where((a) {
+    // Haystack dinormalisasi sama seperti query.
+    final title = _normalizeQuery(a.title);
+    final body = _normalizeQuery(a.body);
+    final ref = _normalizeQuery(a.reference);
+    return terms.any((t) =>
+        title.contains(t) || body.contains(t) || ref.contains(t));
+  }).toList();
 }
 
 /// SATU parser konten (build 1.5.2) — dipakai renderer tab Materi DAN
@@ -112,8 +134,24 @@ List<BodySection> parseBodySections(String body) {
           items: parseCriticalItems(rest),
           raw: block));
     } else if (block.contains('\n')) {
-      sections.add(BodySection(
-          kind: SectionKind.multiline, text: block, raw: block));
+      // Blok multiline: baris pertama bisa berupa label
+      // ("Interpretasi: ..." lalu baris lanjutan) — deteksi dulu
+      // sebelum fallback multiline, supaya accordion/label khusus
+      // tetap dipakai.
+      final firstLine = block.split('\n').first.trim();
+      final firstColon = firstLine.indexOf(': ');
+      if (firstColon >= 2 &&
+          firstColon <= 24 &&
+          !firstLine.substring(0, firstColon).contains(RegExp(r'[0-9]'))) {
+        sections.add(BodySection(
+            kind: SectionKind.labeled,
+            label: firstLine.substring(0, firstColon),
+            text: block.substring(firstColon + 2).trim(),
+            raw: block));
+      } else {
+        sections.add(BodySection(
+            kind: SectionKind.multiline, text: block, raw: block));
+      }
     } else {
       final colon = block.indexOf(': ');
       if (colon >= 2 &&
@@ -137,7 +175,15 @@ List<BodySection> parseBodySections(String body) {
 /// 71 artikel; 2 artikel faeces berupa paragraf tanpa pemisah (1 item
 /// utuh); format multiline dipertahankan untuk robustness.
 /// PENTING: pemisah ' - ' HANYA dipecah di dalam blok kritis — tidak
-/// pernah dipecah global pada teks lain.
+/// pernah dipecah global pada teks lain. Rentang angka seperti
+/// "2 - 8 °C" DILINDUNGI: ' - ' yang diapit digit di kedua sisi bukan
+/// pemisah item (scanner manual agar pola tumpang-tindih
+/// "1 - 2 - 3" tertangani).
+bool _isAsciiDigit(String c) {
+  final u = c.codeUnitAt(0);
+  return u >= 0x30 && u <= 0x39;
+}
+
 List<String> parseCriticalItems(String rest) {
   if (rest.isEmpty) return const [];
   if (rest.contains('\n')) {
@@ -152,11 +198,34 @@ List<String> parseCriticalItems(String rest) {
         .toList();
   }
   if (rest.contains(' - ')) {
-    final parts = rest.split(' - ');
+    // Scanner manual: pecah pada ' - ' KECUALI yang diapit digit di
+    // kedua sisi ("2 - 8 °C", "7,35 - 7,45", "1 - 2 - 3" tetap utuh).
+    final parts = <String>[];
+    final buf = StringBuffer();
+    var i = 0;
+    while (i < rest.length) {
+      final j = rest.indexOf(' - ', i);
+      if (j < 0) {
+        buf.write(rest.substring(i));
+        break;
+      }
+      final beforeDigit = j > 0 && _isAsciiDigit(rest[j - 1]);
+      final afterDigit = j + 3 < rest.length && _isAsciiDigit(rest[j + 3]);
+      if (beforeDigit && afterDigit) {
+        buf.write(rest.substring(i, j + 3)); // pertahankan rentang
+        i = j + 3;
+      } else {
+        buf.write(rest.substring(i, j));
+        parts.add(buf.toString());
+        buf.clear();
+        i = j + 3;
+      }
+    }
+    parts.add(buf.toString());
     final items = <String>[];
-    for (var i = 0; i < parts.length; i++) {
-      var p = parts[i].trim();
-      if (i == 0 && p.startsWith('-')) p = p.substring(1).trim();
+    for (var k = 0; k < parts.length; k++) {
+      var p = parts[k].trim();
+      if (k == 0 && p.startsWith('-')) p = p.substring(1).trim();
       if (p.isNotEmpty) items.add(p);
     }
     return items;
@@ -164,21 +233,31 @@ List<String> parseCriticalItems(String rest) {
   // Satu item saja: tetap buang awalan '- ' / '• ' bila ada, supaya
   // tidak tampil bullet ganda ('• - ...'). Kasus nyata 1.5.2:
   // hematologi-darah-rutin-hitung-jenis.
-  if (rest.startsWith('- ')) return [rest.substring(2).trim()];
-  if (rest.startsWith('• ')) return [rest.substring(2).trim()];
+  // Sisa kosong ('- ' saja) -> daftar kosong, bukan item hampa
+  // (adversarial 3 Nov 2026).
+  if (rest.startsWith('- ')) {
+    final t = rest.substring(2).trim();
+    return t.isEmpty ? const [] : [t];
+  }
+  if (rest.startsWith('• ')) {
+    final t = rest.substring(2).trim();
+    return t.isEmpty ? const [] : [t];
+  }
   return [rest];
 }
 
-/// Indeks seksi pertama (di luar kritis) yang label+isinya mengandung
-/// query, atau null. Dipakai passthrough pencarian: artikel dibuka dari
-/// hasil pencarian langsung membuka seksi yang cocok.
+/// Indeks seksi pertama yang teks aslinya (raw) mengandung query,
+/// atau null. Dipakai passthrough pencarian: artikel dibuka dari
+/// hasil pencarian langsung membuka/menggulir ke seksi yang cocok.
+/// Mencocokkan ke `raw` (bukan label+teks) supaya query persis seperti
+/// di body — mis. "Spesimen: darah" — tetap cocok. Kartu kritis ikut
+/// dicari; pembukaannya TIDAK otomatis (prinsip terkunci: hanya ketukan
+/// pengguna) — pemanggil cukup menggulir ke kartunya.
 int? findSectionForQuery(List<BodySection> sections, String query) {
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return null;
   for (var i = 0; i < sections.length; i++) {
-    final s = sections[i];
-    if (s.kind == SectionKind.critical) continue;
-    if ('${s.label ?? ''} ${s.text}'.toLowerCase().contains(q)) return i;
+    if (sections[i].raw.toLowerCase().contains(q)) return i;
   }
   return null;
 }
@@ -259,33 +338,23 @@ class FormulaDisplay {
   const FormulaDisplay({required this.assets, this.note = ''});
 }
 
-/// id artikel -> tampilan Rumus bergambar. Hanya 12 dari 14 blok Rumus:
-/// kriteria Light cairan pleura (bukan persamaan) dan pelaporan sedimen
-/// urin (instruksi, bukan persamaan) tetap tampil sebagai teks.
+/// id artikel -> tampilan Rumus bergambar. 10 dari 24 blok Rumus
+/// (per 2 Nov 2026): kriteria Light cairan pleura (bukan persamaan),
+/// pelaporan sedimen urin (instruksi, bukan persamaan), dan blok Rumus
+/// prosedural lain tetap tampil sebagai teks.
 const formulaDisplays = <String, FormulaDisplay>{
-  'hematologi-gambaran-darah-tepi': FormulaDisplay(assets: [
-    'assets/formulas/hematologi-gambaran-darah-tepi-1.png',
-    'assets/formulas/hematologi-gambaran-darah-tepi-2.png',
+  'hematologi-indeks-eritrosit': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-indeks-eritrosit-1.png',
+    'assets/formulas/hematologi-indeks-eritrosit-2.png',
+    'assets/formulas/hematologi-indeks-eritrosit-3.png',
   ]),
-  'hematologi-retikulosit': FormulaDisplay(assets: [
-    'assets/formulas/hematologi-retikulosit-1.png',
-    'assets/formulas/hematologi-retikulosit-2.png',
+  'hematologi-rumus-retikulosit': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-rumus-retikulosit-1.png',
+    'assets/formulas/hematologi-rumus-retikulosit-2.png',
   ], note: 'Jumlah total eritrosit terhitung minimal 1.000 sel.'),
-  'hematologi-darah-lengkap': FormulaDisplay(assets: [
-    'assets/formulas/hematologi-darah-lengkap-1.png',
-    'assets/formulas/hematologi-darah-lengkap-2.png',
-    'assets/formulas/hematologi-darah-lengkap-3.png',
-  ]),
-  'hematologi-darah-rutin-hitung-jenis': FormulaDisplay(assets: [
-    'assets/formulas/hematologi-darah-rutin-hitung-jenis.png',
+  'hematologi-nilai-absolut-nlr': FormulaDisplay(assets: [
+    'assets/formulas/hematologi-nilai-absolut-nlr.png',
   ], note: 'Satuan: sel/µL.'),
-  'hemostasis-protrombin-time-pt': FormulaDisplay(assets: [
-    'assets/formulas/hemostasis-protrombin-time-pt.png',
-  ], note: 'MNPT adalah rerata waktu protrombin plasma normal yang '
-      'ditetapkan laboratorium setempat, sedangkan ISI adalah indeks '
-      'sensitivitas internasional tromboplastin reagen yang dipakai. '
-      'INR menyeragamkan hasil PT antar reagen dan laboratorium yang '
-      'berbeda.'),
   'hematologi-mikroskopis-malaria': FormulaDisplay(assets: [
     'assets/formulas/hematologi-mikroskopis-malaria.png',
   ], note: 'Bila tidak diketahui, gunakan nilai standar 8.000 '
