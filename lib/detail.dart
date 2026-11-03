@@ -37,19 +37,52 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   bool _keepScreenOn = false;
 
+  /// Status yang diinginkan pengguna (diset sinkron saat ketuk).
+  bool _wantScreenOn = false;
+
+  /// Operasi platform sedang berjalan; ketukan berikutnya hanya mengubah
+  /// target dan loop di bawah mengejarnya (tidak ada operasi paralel).
+  bool _opRunning = false;
+
   @override
   void dispose() {
-    if (_keepScreenOn) WakelockPlus.disable();
+    _wantScreenOn = false;
+    // Matikan wakelock yang mungkin aktif. Bila ada operasi pending yang
+    // mendapati !mounted, ia mematikan ulang sendiri (lihat di bawah).
+    WakelockPlus.disable().catchError((_) {});
     super.dispose();
   }
 
   Future<void> _toggleBenchMode() async {
-    final next = !_keepScreenOn;
-    setState(() => _keepScreenOn = next);
-    if (next) {
-      await WakelockPlus.enable();
-    } else {
-      await WakelockPlus.disable();
+    _wantScreenOn = !_wantScreenOn;
+    if (_opRunning) return;
+    _opRunning = true;
+    try {
+      while (_wantScreenOn != _keepScreenOn) {
+        final target = _wantScreenOn;
+        try {
+          if (target) {
+            await WakelockPlus.enable();
+          } else {
+            await WakelockPlus.disable();
+          }
+        } catch (_) {
+          break; // platform gagal: indikator tidak berubah
+        }
+        if (!mounted) {
+          // Halaman ditutup saat operasi pending: jangan biarkan
+          // wakelock menyala tanpa halaman.
+          if (target) {
+            try {
+              await WakelockPlus.disable();
+            } catch (_) {}
+          }
+          break;
+        }
+        setState(() => _keepScreenOn = target);
+      }
+    } finally {
+      _opRunning = false;
     }
   }
 
@@ -140,7 +173,11 @@ class _MateriTab extends StatefulWidget {
   State<_MateriTab> createState() => _MateriTabState();
 }
 
-class _MateriTabState extends State<_MateriTab> {
+class _MateriTabState extends State<_MateriTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   late final List<BodySection> _sections;
   late final List<int> _criticalIndices;
   final Set<int> _openSections = {};
@@ -226,6 +263,7 @@ class _MateriTabState extends State<_MateriTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // wajib untuk AutomaticKeepAliveClientMixin
     final article = widget.article;
     return SingleChildScrollView(
       controller: _scrollController,
@@ -279,9 +317,14 @@ class _MateriTabState extends State<_MateriTab> {
             ],
           // Catatan penting: paling bawah artikel (perintah user
           // 27 Okt 2026 — bukan lagi di bawah judul).
+          // Key dipasang supaya passthrough pencarian bisa menggulir
+          // ke kartu ini bila kecocokan ada di dalamnya.
           for (final ci in _criticalIndices) ...[
-            _criticalCard(_sections[ci], _openCriticals.contains(ci),
-                () => _toggleCritical(ci)),
+            Container(
+              key: _sectionKeys[ci],
+              child: _criticalCard(_sections[ci],
+                  _openCriticals.contains(ci), () => _toggleCritical(ci)),
+            ),
             const SizedBox(height: 14),
           ],
         ],
@@ -301,7 +344,10 @@ class _MateriTabState extends State<_MateriTab> {
             border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: InkWell(
+          // Status buka/tutup diumumkan ke screen reader.
+          child: Semantics(
+            expanded: open,
+            child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () => _toggleSection(index),
             child: Padding(
@@ -330,6 +376,7 @@ class _MateriTabState extends State<_MateriTab> {
                   ],
                 ],
               ),
+            ),
             ),
           ),
         );
@@ -372,6 +419,8 @@ class _MateriTabState extends State<_MateriTab> {
               // Tinta PNG rumus hitam di atas transparan: di mode gelap
               // ia butuh wadah putih supaya tetap terbaca. Mode terang
               // tidak berubah (tanpa wadah, seperti sebelumnya).
+              // errorBuilder: aset hilang/rusak tidak boleh menghilangkan
+              // akses ke rumus — tampilkan pesan pengganti.
               if (isDarkMode(context))
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -379,10 +428,17 @@ class _MateriTabState extends State<_MateriTab> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Image.asset(f.assets[i], fit: BoxFit.contain),
+                  child: Image.asset(f.assets[i],
+                      fit: BoxFit.contain,
+                      semanticLabel: 'Gambar rumus ${widget.article.title}',
+                      errorBuilder: (_, __, ___) =>
+                          _formulaLoadError(s.text)),
                 )
               else
-                Image.asset(f.assets[i], fit: BoxFit.contain),
+                Image.asset(f.assets[i],
+                    fit: BoxFit.contain,
+                    semanticLabel: 'Gambar rumus ${widget.article.title}',
+                    errorBuilder: (_, __, ___) => _formulaLoadError(s.text)),
             ],
             if (f.note.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -421,7 +477,39 @@ class _MateriTabState extends State<_MateriTab> {
       final rows = parseInterpretationRows(s.text);
       if (rows != null) return _interpretationTable(rows);
     }
+    // Blok multiline yang baris pertamanya berlabel: render baris-barisnya
+    // seperti multiline agar bullet/langkah tidak hilang.
+    if (s.text.contains('\n')) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: _multilineBlock(s.text),
+      );
+    }
     return Text(s.text, style: const TextStyle(fontSize: 16, height: 1.5));
+  }
+
+  /// Pengganti gambar rumus bila aset gagal dimuat: rumus tetap
+  /// bisa dibaca lewat catatan + teks sumber (pencarian).
+  Widget _formulaLoadError(String fallbackText) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Text(
+              'Gambar rumus tidak dapat dimuat. Lihat catatan di bawah; '
+              'teks rumus tetap bisa dicari lewat kolom pencarian.',
+              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic)),
+        ),
+        // Isi rumus tetap tampil sebagai teks cadangan.
+        const SizedBox(height: 8),
+        Text(fallbackText, style: const TextStyle(fontSize: 16, height: 1.5)),
+      ],
+    );
   }
 
   Widget _stepRow(int number, String text) {
@@ -429,8 +517,8 @@ class _MateriTabState extends State<_MateriTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 24,
-          height: 24,
+          constraints:
+              const BoxConstraints(minWidth: 24, minHeight: 24),
           alignment: Alignment.center,
           decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primaryContainer, shape: BoxShape.circle),
@@ -502,7 +590,10 @@ class _MateriTabState extends State<_MateriTab> {
         border: Border.all(color: kCriticalBorder),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: InkWell(
+      // Status buka/tutup diumumkan ke screen reader.
+      child: Semantics(
+        expanded: open,
+        child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
@@ -541,6 +632,7 @@ class _MateriTabState extends State<_MateriTab> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -572,8 +664,8 @@ class _MateriTabState extends State<_MateriTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 24,
-              height: 24,
+              constraints:
+                  const BoxConstraints(minWidth: 24, minHeight: 24),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer, shape: BoxShape.circle),
